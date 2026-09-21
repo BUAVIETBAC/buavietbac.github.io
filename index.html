@@ -1016,18 +1016,21 @@ table.vb-tbl.generic td.c-c{white-space:pre-line}
 
 /* ===== V37: XUẤT PDF (html2pdf) — 1 tờ A4 đúng nội dung, không trang trắng ===== */
 .quote-sheet.pdf-exporting{
-  box-sizing:border-box!important;
-  position:relative!important;left:0!important;top:0!important;transform:none!important;
-  width:210mm!important;max-width:210mm!important;min-height:0!important;height:auto!important;
-  margin:0!important;padding:10mm 11mm 12mm!important;
-  box-shadow:none!important;outline:none!important;
-  overflow:visible!important;background:#fff!important;
-  display:block!important
+  width:210mm!important;max-width:none!important;min-height:0!important;height:auto!important;
+  margin:0!important;padding:0 11mm!important;box-shadow:none!important;outline:none!important;
+  overflow:visible!important;background:#fff!important
 }
 .quote-sheet.pdf-exporting .q-edit:empty:before{content:none!important}
 .quote-sheet.pdf-exporting .q-edit,.quote-sheet.pdf-exporting .quote-term-edit{border-bottom:none!important;background:transparent!important;outline:none!important}
 .quote-sheet.pdf-exporting td:hover,.quote-sheet.pdf-exporting th:hover,.quote-sheet.pdf-exporting div:hover{background:transparent!important}
 .quote-sheet.pdf-exporting .quote-table tr,.quote-sheet.pdf-exporting .tech-spec-block{break-inside:avoid;page-break-inside:avoid}
+
+/* ===== V38: FIX PDF BỊ LỆCH/CẮT MẤT CỘT TRÁI =====
+   Nguyên nhân: html2pdf đặt khung chứa (.html2pdf__container) với left:0;right:0;margin:auto → nó nằm GIỮA màn hình thật
+   (VD cửa sổ 1600px → lệch ~400px), trong khi html2canvas dựng bản sao ở windowWidth:1100 (lệch ~150px) nhưng lại cắt theo
+   toạ độ của màn hình thật → cắt mất bên trái, thừa trắng bên phải. Ép khung chứa sát mép trái để 2 bên luôn trùng nhau. */
+.html2pdf__container{left:0!important;right:auto!important;top:0!important;margin:0!important;transform:none!important}
+.html2pdf__container .quote-sheet{margin:0!important;transform:none!important}
 
 /* ===== V37: IN (Ctrl+P) — chỉ in tờ báo giá, không in cả trang web ===== */
 /* Lỗi cũ: dùng "visibility:hidden" nên toàn bộ danh sách sản phẩm vẫn chiếm chỗ → in ra 10–13 trang, chỉ trang 1 có chữ.
@@ -3367,27 +3370,7 @@ async function buildQuotePdfBlob() {
       filename: quoteFileName(),
       image: {type: 'jpeg', quality: 0.98},
       // windowWidth cố định → PDF luôn ra bố cục A4 chuẩn, dù bấm từ điện thoại hay máy tính
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: 1200,
-        windowHeight: 1600,
-        onclone: function(doc){
-          const s = doc.getElementById('quoteSheet');
-          if(s){
-            s.classList.add('pdf-exporting');
-            s.style.width='210mm';
-            s.style.minWidth='210mm';
-            s.style.maxWidth='210mm';
-            s.style.margin='0 auto';
-            s.style.transform='none';
-          }
-        }
-      },
+      html2canvas: {scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false, x: 0, y: 0, scrollX: 0, scrollY: 0, windowWidth: 1100},
       jsPDF: {unit: 'mm', format: 'a4', orientation: 'portrait'},
       // Chỉ ngắt trang theo CSS + không cắt ngang dòng bảng / khối thông số / điều khoản
       pagebreak: {mode: ['css'], avoid: ['tr', '.tech-spec-block', '.quote-terms > div:not(#quoteTechSpecs)', '.quote-closing', '.quote-date-line']}
