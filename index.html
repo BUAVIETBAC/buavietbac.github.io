@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- VIETBACBAOGIA-V34 PRO | auto product images from /images + technical specs + 2 companies -->
+<!-- VIETBACBAOGIA-V36 PRO | auto product images from /images + technical specs + 2 companies
+     NÂNG CẤP: header lịch âm + đếm ngược Tết · fix in/PDF (không trang trắng) · Giá dịch vụ theo nhóm búa SB · Thuê búa · Bảo hành đúng bảng Sheet -->
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
@@ -11,7 +12,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1a1a2e">
-<title>VIETBACBAOGIA-V34 PRO</title>
+<title>VIETBACBAOGIA-V36 PRO</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -357,19 +358,7 @@ main{padding:12px 12px 40px;max-width:720px;margin:0 auto}
   box-shadow:0 2px 8px rgba(0,0,0,.15)
 }
 
-@media print{
-  @page{size:A4 portrait;margin:8mm}
-  body{background:#fff!important}
-  body *{visibility:hidden!important}
-  #printArea,#printArea *{visibility:visible!important}
-  #printArea{display:block!important;position:absolute!important;left:0;top:0;width:100%;height:auto;overflow:visible;padding:0;background:#fff}
-  .quote-screen-hint,.quote-version-badge,.print-actions{display:none!important}
-  .quote-sheet{width:100%;min-height:0;margin:0;padding:0;box-shadow:none;font-family:"Times New Roman",Times,serif!important}
-  .quote-table thead{display:table-header-group}
-  .quote-table tr{break-inside:avoid;page-break-inside:avoid}
-  .q-edit{border-bottom:none}
-}
-
+/* (V37) Quy tắc in đã chuyển xuống khối "V37: IN" ở cuối file */
 
 
 /* ===== V30: DESKTOP PRO + FULL QUOTE EDITING + PRODUCT IMAGE ===== */
@@ -953,77 +942,232 @@ tr.veh-row{display:none}
   .tech-accessory-item{line-height:1.2!important}
 }
 
+</style>
 
-/* ===== V34 PRO PRINT ENGINE FIX ===== */
+<style>
+.calendar-pro{font-size:12px;color:#5eead4;margin-top:4px;font-weight:600;line-height:1.5}
+.catalog-pro .product-card{box-shadow:0 8px 24px rgba(0,0,0,.18)}
+
+/* ===== V37: HEADER LỊCH (ngày dương · âm lịch · đếm ngược Tết) ===== */
+.topbar-title{
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:10px;align-items:center;
+  grid-template-areas:"logo title btn" "logo cal btn" "logo sub btn" "logo ctr btn"
+}
+.topbar-title>div:nth-child(2){display:contents}   /* h1 / lịch / sub / bộ đếm thành ô lưới riêng → lịch được xuống dòng gọn trên điện thoại */
+.topbar-title .logo{grid-area:logo}
+.topbar-title h1{grid-area:title}
+.topbar-title .calendar-pro{grid-area:cal}
+.topbar-title .sub{grid-area:sub}
+.topbar-title .ctr-bar{grid-area:ctr}
+.topbar-title .btn-admin{grid-area:btn;margin-left:0;justify-self:end}
+.calendar-pro{display:flex;flex-wrap:wrap;align-items:center;gap:1px 0}
+.calendar-pro .cal-seg{white-space:nowrap}
+.calendar-pro .cal-seg+.cal-seg::before{content:'|';margin:0 8px;color:#3b6b6b;font-weight:400}
+@media(max-width:600px){
+  .topbar-title{grid-template-areas:"logo title btn" "cal cal cal" "sub sub sub" "ctr ctr ctr";column-gap:8px}
+  .calendar-pro{font-size:11px;line-height:1.55}
+  .calendar-pro .cal-seg{margin-right:12px}
+  .calendar-pro .cal-seg+.cal-seg::before{content:none}
+}
+
+/* ===== V37: BẢNG GIÁ DỊCH VỤ / THUÊ BÚA / BẢO HÀNH (đúng bảng Sheet) ===== */
+.vb-tbl-cap{font-size:13px;font-weight:700;color:var(--accent);margin:4px 2px 6px;line-height:1.4}
+.vb-tbl-info{display:flex;justify-content:space-between;gap:4px 12px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin:2px 2px 8px}
+.vb-tbl-warn,.vb-tbl-hint{font-size:12px;line-height:1.5;border-radius:9px;padding:8px 11px;margin:0 0 8px}
+.vb-tbl-warn{background:rgba(244,162,97,.10);border:1px solid rgba(244,162,97,.45);color:#f6c89f}
+.vb-tbl-hint{background:rgba(72,202,228,.08);border:1px solid rgba(72,202,228,.4);color:var(--blue)}
+.table-wrap.vb-tbl-wrap{overflow-x:auto;border-radius:12px}
+table.vb-tbl{border-collapse:separate;border-spacing:0;width:100%;min-width:560px;font-size:13px}
+table.vb-tbl th{
+  background:var(--surface3);color:var(--blue);font-weight:700;font-size:11.5px;letter-spacing:.3px;
+  padding:10px 12px;border-bottom:2px solid var(--border);border-right:1px solid var(--border);white-space:nowrap
+}
+table.vb-tbl th.th-n{text-align:left;min-width:150px;position:sticky;left:0;z-index:3}
+table.vb-tbl th.th-v{text-align:right;color:var(--accent)}
+table.vb-tbl th.th-c{text-align:center}
+table.vb-tbl th.th-t{text-align:left}
+table.vb-tbl td{padding:9px 12px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);vertical-align:middle;color:var(--text)}
+table.vb-tbl td.c-n{min-width:150px;position:sticky;left:0;z-index:2;background:var(--surface);box-shadow:1px 0 0 var(--border);font-weight:600;line-height:1.35}
+table.vb-tbl tbody tr:nth-child(even) td{background:#1d1d33}
+table.vb-tbl td.c-v{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+table.vb-tbl td.c-c{text-align:center}
+table.vb-tbl td.c-t{text-align:left;white-space:pre-line;line-height:1.45}
+table.vb-tbl td.nt{color:#bcd7e6;font-size:12px}
+table.vb-tbl td.num{font-weight:700;color:var(--accent)}
+table.vb-tbl td.neg{color:var(--green)}
+table.vb-tbl td.qable{cursor:pointer}
+table.vb-tbl td.qable:hover{background:rgba(244,162,97,.14)}
+table.vb-tbl th.hi,table.vb-tbl td.hi{background:rgba(244,162,97,.20)!important;box-shadow:inset 0 0 0 1px rgba(244,162,97,.45)}
+table.vb-tbl tr.sec td{background:var(--surface3)!important;color:var(--blue);font-weight:700;font-size:11.5px;letter-spacing:.5px;text-transform:uppercase;padding:7px 12px;position:static}
+table.vb-tbl .cell-sub{font-size:10.5px;color:var(--muted);font-weight:400;margin-top:2px}
+table.vb-tbl .cell-empty{color:var(--muted)}
+table.vb-tbl.generic{min-width:0}
+table.vb-tbl.generic th{white-space:normal}
+table.vb-tbl.generic th.th-n,table.vb-tbl.generic td.c-n{min-width:0}
+table.vb-tbl.generic td.c-c{white-space:pre-line}
+@media(max-width:600px){
+  table.vb-tbl{font-size:12px;min-width:470px}
+  table.vb-tbl.generic{min-width:0}
+  table.vb-tbl th{padding:8px 7px;font-size:10.5px}
+  table.vb-tbl td{padding:7px 7px}
+  table.vb-tbl th.th-n,table.vb-tbl td.c-n{min-width:118px}
+  table.vb-tbl.generic th.th-n,table.vb-tbl.generic td.c-n{min-width:0;position:static}
+}
+
+/* ===== V37: XUẤT PDF (html2pdf) — 1 tờ A4 đúng nội dung, không trang trắng ===== */
+.quote-sheet.pdf-exporting{
+  width:210mm!important;max-width:none!important;min-height:0!important;height:auto!important;
+  margin:0!important;padding:0 11mm!important;box-shadow:none!important;outline:none!important;
+  overflow:visible!important;background:#fff!important
+}
+.quote-sheet.pdf-exporting .q-edit:empty:before{content:none!important}
+.quote-sheet.pdf-exporting .q-edit,.quote-sheet.pdf-exporting .quote-term-edit{border-bottom:none!important;background:transparent!important;outline:none!important}
+.quote-sheet.pdf-exporting td:hover,.quote-sheet.pdf-exporting th:hover,.quote-sheet.pdf-exporting div:hover{background:transparent!important}
+.quote-sheet.pdf-exporting .quote-table tr,.quote-sheet.pdf-exporting .tech-spec-block{break-inside:avoid;page-break-inside:avoid}
+
+/* ===== V37: IN (Ctrl+P) — chỉ in tờ báo giá, không in cả trang web ===== */
+/* Lỗi cũ: dùng "visibility:hidden" nên toàn bộ danh sách sản phẩm vẫn chiếm chỗ → in ra 10–13 trang, chỉ trang 1 có chữ.
+   Nay ẩn hẳn (display:none) mọi thứ ngoài #printArea. */
 @media print{
-  html,body{width:100%!important;height:auto!important;overflow:visible!important}
-  body *{visibility:hidden!important}
-  #printArea,#printArea *{visibility:visible!important}
-  #printArea{
-    position:absolute!important;
-    left:0!important;
-    top:0!important;
-    width:100%!important;
-    height:auto!important;
-    display:block!important;
-    overflow:visible!important;
-    background:#fff!important;
-    padding:0!important;
+  @page{size:A4 portrait;margin:10mm 8mm 12mm}
+  html,body{height:auto!important;min-height:0!important;overflow:visible!important;margin:0!important;padding:0!important;background:#fff!important}
+  body>*:not(#printArea){display:none!important}
+  body>#printArea{
+    display:block!important;position:static!important;inset:auto!important;width:auto!important;height:auto!important;
+    max-height:none!important;overflow:visible!important;padding:0!important;margin:0!important;background:#fff!important;z-index:auto!important
   }
+  .quote-version-badge,.quote-company-toolbar,.quote-screen-hint,.quote-pro-status,.print-actions,
+  .tech-spec-empty,.tech-spec-source-note{display:none!important}
   .quote-sheet{
-    min-height:0!important;
-    height:auto!important;
-    width:210mm!important;
-    margin:0 auto!important;
-    padding:8mm 10mm!important;
-    box-shadow:none!important;
+    width:100%!important;max-width:none!important;min-height:0!important;height:auto!important;margin:0!important;padding:0!important;
+    box-shadow:none!important;outline:none!important;border:none!important;overflow:visible!important
   }
-  .quote-table,
-  .tech-spec-table,
-  .quote-meta{
-    break-inside:auto!important;
-    page-break-inside:auto!important;
-  }
-  .quote-table tr,
-  .tech-spec-table tr{
-    break-inside:avoid!important;
-    page-break-inside:avoid!important;
-  }
-  .tech-spec-block{
-    break-before:auto!important;
-    page-break-before:auto!important;
-  }
-  .print-page-spacer,
-  .empty-print-block{
-    display:none!important;
-  }
-}
-/* V34: tab data tables giống sheet gốc */
-.data-sheet-table{
- width:100%;
- border-collapse:collapse;
- background:#fff;
- color:#000;
- font-family:"Times New Roman",serif;
- font-size:12pt;
-}
-.data-sheet-table td,.data-sheet-table th{
- border:1px solid #000;
- padding:5px 7px;
- vertical-align:middle;
-}
-.data-sheet-table th{
- text-align:center;
- font-weight:700;
-}
-.data-sheet-title{
- text-align:center;
- font-weight:700;
- font-size:15pt;
- padding:8px;
+  .q-edit,.quote-term-edit{border-bottom:none!important;background:transparent!important;outline:none!important}
+  .q-edit:empty:before{content:none!important}
+  .quote-table thead{display:table-header-group}
+  .quote-table tr,.tech-spec-block,.tech-spec-table tr,.quote-terms>div:not(#quoteTechSpecs),.quote-meta tr,.quote-intro,.quote-closing,.quote-date-line{break-inside:avoid;page-break-inside:avoid}
+  .quote-sheet,.quote-sheet *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 
 </style>
+<script>
+/* ===== V37: LỊCH ÂM (thuật toán Hồ Ngọc Đức, múi giờ VN UTC+7) + ĐẾM NGƯỢC TẾT ===== */
+(function () {
+  var TZ = 7;
+  function jdFromDate(dd, mm, yy) {
+    var a = Math.floor((14 - mm) / 12), y = yy + 4800 - a, m = mm + 12 * a - 3;
+    var jd = dd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+    if (jd < 2299161) jd = dd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - 32083;
+    return jd;
+  }
+  function jdToDate(jd) {
+    var a, b, c;
+    if (jd > 2299160) { a = jd + 32044; b = Math.floor((4 * a + 3) / 146097); c = a - Math.floor((b * 146097) / 4); }
+    else { b = 0; c = jd + 32082; }
+    var d = Math.floor((4 * c + 3) / 1461), e = c - Math.floor((1461 * d) / 4), m = Math.floor((5 * e + 2) / 153);
+    return [e - Math.floor((153 * m + 2) / 5) + 1, m + 3 - 12 * Math.floor(m / 10), b * 100 + d - 4800 + Math.floor(m / 10)];
+  }
+  function newMoonDay(k) {
+    var T = k / 1236.85, T2 = T * T, T3 = T2 * T, dr = Math.PI / 180;
+    var Jd1 = 2415020.75933 + 29.53058868 * k + 0.0001178 * T2 - 0.000000155 * T3;
+    Jd1 += 0.00033 * Math.sin((166.56 + 132.87 * T - 0.009173 * T2) * dr);
+    var M = 359.2242 + 29.10535608 * k - 0.0000333 * T2 - 0.00000347 * T3;
+    var Mpr = 306.0253 + 385.81691806 * k + 0.0107306 * T2 + 0.00001236 * T3;
+    var F = 21.2964 + 390.67050646 * k - 0.0016528 * T2 - 0.00000239 * T3;
+    var C1 = (0.1734 - 0.000393 * T) * Math.sin(M * dr) + 0.0021 * Math.sin(2 * dr * M);
+    C1 += -0.4068 * Math.sin(Mpr * dr) + 0.0161 * Math.sin(dr * 2 * Mpr) - 0.0004 * Math.sin(dr * 3 * Mpr);
+    C1 += 0.0104 * Math.sin(dr * 2 * F) - 0.0051 * Math.sin(dr * (M + Mpr)) - 0.0074 * Math.sin(dr * (M - Mpr)) + 0.0004 * Math.sin(dr * (2 * F + M));
+    C1 += -0.0004 * Math.sin(dr * (2 * F - M)) - 0.0006 * Math.sin(dr * (2 * F + Mpr)) + 0.0010 * Math.sin(dr * (2 * F - Mpr)) + 0.0005 * Math.sin(dr * (2 * Mpr + M));
+    var dt = T < -11 ? 0.001 + 0.000839 * T + 0.0002261 * T2 - 0.00000845 * T3 - 0.000000081 * T * T3 : -0.000278 + 0.000265 * T + 0.000262 * T2;
+    return Math.floor(Jd1 + C1 - dt + 0.5 + TZ / 24);
+  }
+  function sunLongitude(jdn) {
+    var T = (jdn - 2451545.5 - TZ / 24) / 36525, T2 = T * T, dr = Math.PI / 180;
+    var M = 357.52910 + 35999.05030 * T - 0.0001559 * T2 - 0.00000048 * T * T2;
+    var L0 = 280.46645 + 36000.76983 * T + 0.0003032 * T2;
+    var DL = (1.914600 - 0.004817 * T - 0.000014 * T2) * Math.sin(dr * M) + (0.019993 - 0.000101 * T) * Math.sin(dr * 2 * M) + 0.000290 * Math.sin(dr * 3 * M);
+    var L = (L0 + DL) * dr;
+    L -= Math.PI * 2 * Math.floor(L / (Math.PI * 2));
+    return Math.floor(L / Math.PI * 6);
+  }
+  function lunarMonth11(yy) {
+    var off = jdFromDate(31, 12, yy) - 2415021, k = Math.floor(off / 29.530588853), nm = newMoonDay(k);
+    if (sunLongitude(nm) >= 9) nm = newMoonDay(k - 1);
+    return nm;
+  }
+  function leapMonthOffset(a11) {
+    var k = Math.floor((a11 - 2415021.076998695) / 29.530588853 + 0.5), last = 0, i = 1;
+    var arc = sunLongitude(newMoonDay(k + i));
+    do { last = arc; i++; arc = sunLongitude(newMoonDay(k + i)); } while (arc !== last && i < 14);
+    return i - 1;
+  }
+  function solar2Lunar(dd, mm, yy) {
+    var dayNumber = jdFromDate(dd, mm, yy), k = Math.floor((dayNumber - 2415021.076998695) / 29.530588853);
+    var monthStart = newMoonDay(k + 1);
+    if (monthStart > dayNumber) monthStart = newMoonDay(k);
+    var a11 = lunarMonth11(yy), b11 = a11, lunarYear;
+    if (a11 >= monthStart) { lunarYear = yy; a11 = lunarMonth11(yy - 1); }
+    else { lunarYear = yy + 1; b11 = lunarMonth11(yy + 1); }
+    var lunarDay = dayNumber - monthStart + 1, diff = Math.floor((monthStart - a11) / 29), leap = 0, lunarMonth = diff + 11;
+    if (b11 - a11 > 365) {
+      var lm = leapMonthOffset(a11);
+      if (diff >= lm) { lunarMonth = diff + 10; if (diff === lm) leap = 1; }
+    }
+    if (lunarMonth > 12) lunarMonth -= 12;
+    if (lunarMonth >= 11 && diff < 4) lunarYear -= 1;
+    return { d: lunarDay, m: lunarMonth, y: lunarYear, leap: leap };
+  }
+  function lunar2Solar(ld, lm, ly, leap) {
+    var a11, b11;
+    if (lm < 11) { a11 = lunarMonth11(ly - 1); b11 = lunarMonth11(ly); }
+    else { a11 = lunarMonth11(ly); b11 = lunarMonth11(ly + 1); }
+    var k = Math.floor(0.5 + (a11 - 2415021.076998695) / 29.530588853), off = lm - 11;
+    if (off < 0) off += 12;
+    if (b11 - a11 > 365) {
+      var leapOff = leapMonthOffset(a11), leapM = leapOff - 2;
+      if (leapM < 0) leapM += 12;
+      if (leap && lm !== leapM) return null;
+      if (leap || off >= leapOff) off += 1;
+    }
+    return jdToDate(newMoonDay(k + off) + ld - 1);
+  }
+  var CAN = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
+  var CHI = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
+  var pad = function (n) { return String(n).padStart(2, '0'); };
+  var DOW = ['Chủ Nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+
+  // Mùng 1 Tết (1/1 âm lịch) của năm dương lịch Y → Date (giờ địa phương, 00:00)
+  function tetOf(Y) { var s = lunar2Solar(1, 1, Y, 0); return s ? new Date(s[2], s[1] - 1, s[0]) : null; }
+
+  window.VBCal = { solar2Lunar: solar2Lunar, lunar2Solar: lunar2Solar, tetOf: tetOf };
+
+  function render() {
+    var el = document.getElementById('calendarPro');
+    if (!el) return;
+    var now = new Date(), Y = now.getFullYear();
+    var today = Date.UTC(Y, now.getMonth(), now.getDate());       // so sánh theo NGÀY (không lệch giờ/múi giờ/DST)
+    var tet = tetOf(Y), tetU = tet && Date.UTC(tet.getFullYear(), tet.getMonth(), tet.getDate());
+    if (!tet || tetU < today) { tet = tetOf(Y + 1); tetU = Date.UTC(tet.getFullYear(), tet.getMonth(), tet.getDate()); }   // Tết năm nay đã qua → đếm tới Tết năm sau
+    var days = Math.round((tetU - today) / 86400000);
+    var lu = solar2Lunar(now.getDate(), now.getMonth() + 1, Y);
+    var lunarTxt = pad(lu.d) + '/' + pad(lu.m) + (lu.leap ? ' nhuận' : '') + ' ' + CAN[(lu.y + 6) % 10] + ' ' + CHI[(lu.y + 8) % 12];
+    var tetTxt = pad(tet.getDate()) + '/' + pad(tet.getMonth() + 1) + '/' + tet.getFullYear();
+    var cd = days === 0 ? 'Hôm nay là Mùng 1 Tết' : 'Còn ' + days + ' ngày đến Tết';
+    var parts = [
+      '📅 ' + DOW[now.getDay()] + ' ' + pad(now.getDate()) + '/' + pad(now.getMonth() + 1) + '/' + Y,
+      '🌙 Âm lịch ' + lunarTxt,
+      '🧧 ' + cd,
+      '🎆 Tết ' + tetTxt
+    ];
+    el.innerHTML = parts.map(function (t) { return '<span class="cal-seg">' + t + '</span>'; }).join('');
+    el.title = parts.join(' | ');
+  }
+  window.VBCalRender = render;
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render); else render();
+  setInterval(render, 60 * 1000);                                 // tự đổi ngày lúc 0h khi để mở app qua đêm
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) render(); });
+})();
+</script>
 </head>
 <body>
 
@@ -1034,7 +1178,8 @@ tr.veh-row{display:none}
   <div class="topbar-title">
     <span class="logo">🔨</span>
     <div>
-      <h1>VIETBACBAOGIA-V33</h1>
+      <h1>VIETBACBAOGIA-V36 PRO</h1>
+      <div class="calendar-pro" id="calendarPro">📅 Đang cập nhật lịch...</div>
       <div class="sub" id="topSub">Búa · Đầm · Kìm · Phụ Tùng · Dịch Vụ</div>
       <div class="ctr-bar">
         <span><span class="ctr-dot"></span><span id="cOnline">1</span> online</span>
@@ -1158,7 +1303,7 @@ tr.veh-row{display:none}
 
 <!-- PRINT AREA -->
 <div class="print-area" id="printArea">
-  <div class="quote-version-badge">✅ VIETBACBAOGIA-V34 PRO · ẢNH SP TỰ ĐỘNG · BẢNG KT · 2 CÔNG TY</div>
+  <div class="quote-version-badge">✅ VIETBACBAOGIA-V36 PRO · PDF FIX · KHÔNG TRANG TRẮNG · BẢNG KT · 2 CÔNG TY</div>
   <div class="quote-company-toolbar" id="quoteCompanyToolbar">
     <span class="company-toolbar-label">Mẫu báo giá:</span>
     <button type="button" data-company="vietbac" onclick="setQuoteCompany('vietbac',true)">VIỆT BẮC</button>
@@ -1168,7 +1313,7 @@ tr.veh-row{display:none}
     <span class="qps" id="specSourceStatus">⚙ Thông số kỹ thuật: đang chuẩn bị</span>
     <span class="qps ok">✓ Logo: mẫu gốc PDF</span>
   </div>
-  <div class="quote-screen-hint">Bấm trực tiếp vào <b>BẤT KỲ chữ hoặc số nào trong tờ báo giá</b> để sửa. V33 tự lấy <b>ảnh sản phẩm từ thư mục /images trên GitHub</b> để mọi thiết bị dùng chung; vẫn cho phép chọn ảnh thủ công để thay thế. <b>THÔNG SỐ KỸ THUẬT</b> giữ đúng bố cục mẫu. Phần in dùng <b>Times New Roman</b>.</div>
+  <div class="quote-screen-hint">Bấm trực tiếp vào <b>BẤT KỲ chữ hoặc số nào trong tờ báo giá</b> để sửa. V36 tự lấy <b>ảnh sản phẩm từ thư mục /images trên GitHub</b> để mọi thiết bị dùng chung; vẫn cho phép chọn ảnh thủ công để thay thế. <b>THÔNG SỐ KỸ THUẬT</b> giữ đúng bố cục mẫu. Phần in dùng <b>Times New Roman</b>.</div>
   <div class="quote-sheet" id="quoteSheet" data-company="vietbac" contenteditable="true" spellcheck="false" aria-label="Báo giá - có thể chỉnh sửa toàn bộ nội dung">
     <div class="print-company-head">
       <div class="print-brand"><img id="printBrandImg" src="data:image/png;base64,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" alt="VIỆT BẮC"></div>
@@ -1203,7 +1348,7 @@ tr.veh-row{display:none}
 <div class="admin-overlay open" id="adminOverlay">
   <div class="admin-panel">
     <div class="logo" style="font-size:32px;text-align:center;margin-bottom:6px">🔨</div>
-    <h2 style="text-align:center">VIETBACBAOGIA-V33</h2>
+    <h2 style="text-align:center">VIETBACBAOGIA-V36 PRO</h2>
     <div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:18px">Đăng nhập bằng tài khoản được cấp để sử dụng bảng giá</div>
     <input type="email" id="adminEmail" placeholder="Email…" autocomplete="username">
     <input type="password" id="adminPass" placeholder="Mật khẩu…" autocomplete="current-password">
@@ -1261,6 +1406,333 @@ const COMPANY_PROFILES = {
 };
 let quoteCompany = 'vietbac';
 try { const qco = localStorage.getItem('vb_quote_company'); if (COMPANY_PROFILES[qco]) quoteCompany = qco; } catch(e){}
+/* ===== V37: GIÁ DỊCH VỤ (theo nhóm búa) · THUÊ BÚA · BẢO HÀNH → hiển thị ĐÚNG BẢNG TRONG SHEET =====
+   Cả 3 tab đọc thẳng từ Google Sheet và vẽ thành 1 bảng (không còn dạng thẻ).
+   - Giá dịch vụ : cột theo nhóm búa  SB10-SB43 | SB45-SB50 | SB60-SB81 | SB100+
+   - Thuê búa    : Loại búa | 1 tháng | 2 tháng | 3 tháng | Vận chuyển
+   - Bảo hành    : nguyên bảng Sheet (đúng tiêu đề cột, đúng thứ tự dòng)
+   Nhận cột theo TÊN TIÊU ĐỀ (không cố định chữ cái cột) nên chèn/xóa cột trong Sheet vẫn đọc đúng. */
+const SB_GROUPS = [
+  {label: 'SB10-SB43'},
+  {label: 'SB45-SB50'},
+  {label: 'SB60-SB81'},
+  {label: 'SB100+'}
+];
+function sbGroupIndex(n) {           // số hiệu búa SB → nhóm giá (0..3), -1 nếu không hợp lệ
+  n = +n;
+  if (!(n >= 10)) return -1;
+  if (n <= 43) return 0;
+  if (n <= 59) return 1;
+  if (n <= 99) return 2;
+  return 3;
+}
+function sbGroupOfHeader(cell) {     // "SB10-SB43" / "SB 45 - 50" / "SB100+" → nhóm
+  const m = normHeader(cell).replace(/\s+/g, '').match(/sb-?(\d{2,3})/);
+  return m ? sbGroupIndex(m[1]) : -1;
+}
+// Tên NB (Neobuzz) ↔ SB tương đương — lấy đúng từ các dòng "SBxx/NBxx" trong bảng giá (đinh, phốt, công tắc…)
+const NB2SB = {20: 20, 30: 30, 40: 35, 50: 40, 70: 43, 100: 45, 140: 50, 180: 60, 200: 70, 220: 81, 300: 121, 370: 130};
+function hammerGroupFromQuery(q) {   // gõ "sb70" / "nb140" vào ô tìm → tô sáng đúng cột nhóm búa
+  const m = String(q).replace(/[\s\-_.]/g, '').match(/^(sb|nbo|nb)(\d{2,3})[a-z]?$/);
+  if (!m) return -1;
+  const n = +m[2];
+  return sbGroupIndex(m[1] === 'sb' ? n : (NB2SB[n] || 0));
+}
+
+const _NUM_RE = /^([-–])?\s*(\d{1,3}(?:[.,\s]\d{3})+|\d+)\s*(?:đ|d|vnđ|vnd|₫)?$/i;
+function sheetClean(s) { return String(s == null ? '' : s).replace(/\r/g, '').trim(); }
+function cellNum(raw) {              // "1.500.000" / "1,500,000" / "-500000" → số; chữ thường ("Miễn phí") → null
+  const m = sheetClean(raw).match(_NUM_RE);
+  if (!m) return null;
+  return (m[1] ? -1 : 1) * parseInt(m[2].replace(/\D/g, ''), 10);
+}
+function fmtCell(raw) {              // số → 1.500.000 · chữ giữ nguyên đúng như trong Sheet
+  const s = sheetClean(raw);
+  if (!s) return '';
+  const n = cellNum(s);
+  return n === null ? s : (n < 0 ? '–' : '') + Math.abs(n).toLocaleString('vi-VN');
+}
+function rowFilled(r) { return r.filter(c => sheetClean(c) !== '').length; }
+
+/* ---------- Đọc bảng GIÁ DỊCH VỤ ---------- */
+function buildServiceTable(rows) {
+  const out = [], caption = [];
+  let colmap = null, nameCol = 0, dvtCol = -1, noteCols = [];
+  for (const row of rows) {
+    const gm = {};                                   // dòng tiêu đề = có ≥2 cột nhóm búa
+    row.forEach((c, i) => { const g = sbGroupOfHeader(c); if (g >= 0 && gm[g] === undefined) gm[g] = i; });
+    if (Object.keys(gm).length >= 2) {
+      colmap = gm;
+      const gCols = new Set(Object.values(gm));
+      const hn = row.map(normHeader);
+      const firstG = Math.min(...gCols);
+      const isStt = h => /^(stt|tt|#|no\.?)$/.test(h);
+      nameCol = hn.findIndex((h, i) => h && !gCols.has(i) && /dich vu|noi dung|hang muc|cong viec|danh muc|mo ta|loai|^ten/.test(h));
+      if (nameCol < 0) {
+        const cand = hn.map((h, i) => i).filter(i => i < firstG && !isStt(hn[i]) && !/^(dvt|don vi)/.test(hn[i]) && !/^ghi chu/.test(hn[i]));
+        nameCol = cand.length ? cand[cand.length - 1] : 0;
+      }
+      dvtCol = hn.findIndex(h => /^(dvt|don vi( tinh)?)$/.test(h));
+      noteCols = hn.map((h, i) => i).filter(i => /^(ghi chu|luu y|chu thich|note)/.test(hn[i]));
+      continue;
+    }
+    if (!colmap) {                                   // dòng tiêu đề lớn phía trên bảng
+      const t = row.map(sheetClean).find(Boolean);
+      if (t) caption.push(t);
+      continue;
+    }
+    const name = sheetClean(row[nameCol]);
+    const cells = [0, 1, 2, 3].map(g => colmap[g] !== undefined ? sheetClean(row[colmap[g]]) : '');
+    const dvt = dvtCol >= 0 ? sheetClean(row[dvtCol]) : '';
+    const note = noteCols.map(i => sheetClean(row[i])).filter(Boolean).join(' — ');
+    const anyVal = cells.some(Boolean);
+    if (!name) {
+      if (!anyVal) { const t = row.map(sheetClean).find(x => x && !/^\d+$/.test(x)); if (t) out.push({sec: true, text: t}); }
+      continue;
+    }
+    if (!anyVal && !dvt && !note) { out.push({sec: true, text: name}); continue; }
+    out.push({n: name, dvt, cells, note});
+  }
+  if (!out.some(r => !r.sec)) return null;
+  return {caption, rows: out, cols: [{label: 'Dịch vụ / hạng mục'}].concat(SB_GROUPS.map(g => ({label: g.label, num: true})))};
+}
+// Sheet đặt ngược: mỗi DÒNG là 1 nhóm búa, mỗi CỘT là 1 dịch vụ → xoay lại cho đúng dạng bảng
+function buildServiceTableTransposed(rows) {
+  const width = Math.max(...rows.map(r => r.length));
+  let gc = -1;
+  for (let c = 0; c < width && gc < 0; c++) {
+    const set = new Set();
+    rows.forEach(r => { const g = sbGroupOfHeader(r[c]); if (g >= 0) set.add(g); });
+    if (set.size >= 2) gc = c;
+  }
+  if (gc < 0) return null;
+  const gRow = {};
+  let first = -1;
+  rows.forEach((r, i) => { const g = sbGroupOfHeader(r[gc]); if (g >= 0 && gRow[g] === undefined) { gRow[g] = i; if (first < 0) first = i; } });
+  let hr = -1;
+  for (let i = first - 1; i >= 0; i--) if (rowFilled(rows[i]) >= 2) { hr = i; break; }
+  if (hr < 0) return null;
+  const out = [];
+  rows[hr].forEach((h, c) => {
+    const name = sheetClean(h);
+    if (c === gc || !name || /^(stt|tt|nhom bua|nhom)$/.test(normHeader(name))) return;
+    out.push({n: name, dvt: '', note: '', cells: [0, 1, 2, 3].map(g => gRow[g] !== undefined ? sheetClean(rows[gRow[g]][c]) : '')});
+  });
+  if (!out.length) return null;
+  return {caption: [], rows: out, cols: [{label: 'Dịch vụ / hạng mục'}].concat(SB_GROUPS.map(g => ({label: g.label, num: true})))};
+}
+
+/* ---------- Đọc bảng THUÊ BÚA ---------- */
+function buildRentalTable(rows) {
+  let hr = -1;
+  for (let i = 0; i < Math.min(rows.length, 12); i++) {
+    const h = rows[i].map(normHeader);
+    if (h.some(x => /thang/.test(x)) && h.filter(Boolean).length >= 3) { hr = i; break; }
+  }
+  if (hr < 0) return null;
+  const H = rows[hr].map(normHeader);
+  const find = re => H.findIndex(h => re.test(h));
+  let nameC = H.findIndex(h => /loai bua|ten bua|ten hang|^bua|^loai|^ten/.test(h) && !/thang|van chuyen/.test(h));
+  if (nameC < 0) nameC = H.findIndex(h => h && !/^(stt|tt)$/.test(h) && !/thang|van chuyen/.test(h));
+  if (nameC < 0) nameC = 0;
+  const idx = {m1: find(/(^|[^0-9])1\s*thang/), m2: find(/(^|[^0-9])2\s*thang/), m3: find(/(^|[^0-9])3\s*thang/), vc: find(/van chuyen|^vc$/)};
+  const used = new Set([nameC].concat(Object.values(idx)).filter(i => i >= 0));
+  const rest = H.map((h, i) => i).filter(i => H[i] && !used.has(i) && !/^(stt|tt|ghi chu|note|luu y)/.test(H[i]));
+  for (const k of ['m1', 'm2', 'm3', 'vc']) if (idx[k] < 0) idx[k] = rest.length ? rest.shift() : -1;   // dự phòng theo vị trí cột
+  const noteC = find(/^(ghi chu|luu y|note)/);
+  const out = [];
+  for (let r = hr + 1; r < rows.length; r++) {
+    const row = rows[r];
+    const name = sheetClean(row[nameC]);
+    if (!name) continue;
+    const cells = ['m1', 'm2', 'm3', 'vc'].map(k => idx[k] >= 0 ? sheetClean(row[idx[k]]) : '');
+    if (!cells.some(Boolean)) { out.push({sec: true, text: name}); continue; }
+    out.push({n: name, dvt: '', cells, note: noteC >= 0 ? sheetClean(row[noteC]) : ''});
+  }
+  if (!out.some(r => !r.sec)) return null;
+  return {
+    caption: rows.slice(0, hr).map(r => r.map(sheetClean).filter(Boolean).join(' ')).filter(Boolean),
+    rows: out,
+    cols: [{label: 'Loại búa'}, {label: '1 tháng', num: true}, {label: '2 tháng', num: true}, {label: '3 tháng', num: true}, {label: 'Vận chuyển', num: true}]
+  };
+}
+
+/* ---------- Đọc nguyên bảng Sheet (Bảo hành + dự phòng khi Sheet khác dự kiến) ---------- */
+function buildGenericTable(rows, headerTest) {
+  let hr = -1;
+  for (let i = 0; i < Math.min(rows.length, 12); i++) {
+    if (rowFilled(rows[i]) >= 2 && headerTest(rows[i].map(normHeader))) { hr = i; break; }
+  }
+  if (hr < 0) for (let i = 0; i < Math.min(rows.length, 12); i++) if (rowFilled(rows[i]) >= 3) { hr = i; break; }
+  if (hr < 0) hr = 0;
+  const hdr = rows[hr].map(sheetClean), body = rows.slice(hr + 1);
+  const width = Math.max(hdr.length, ...body.map(r => r.length));
+  const keep = [];
+  for (let c = 0; c < width; c++) if (hdr[c] || body.some(r => sheetClean(r[c]))) keep.push(c);
+  if (keep.length < 1) return null;
+  const out = [];
+  for (const r of body) {
+    const cells = keep.map(c => sheetClean(r[c]));
+    const n = cells.filter(Boolean).length;
+    if (!n) continue;
+    if (n === 1 && keep.length > 1) { out.push({sec: true, text: cells.find(Boolean)}); continue; }
+    out.push({n: cells[0], dvt: '', note: '', cells: cells.slice(1)});
+  }
+  if (!out.some(r => !r.sec)) return null;
+  const cols = keep.map(c => ({label: (hdr[c] || '').replace(/\s+/g, ' ')}));
+  cols.forEach((col, ci) => {         // cột ngắn (vd "12 tháng") căn giữa cho dễ nhìn
+    col.center = ci > 0 && out.every(r => r.sec || sheetClean(ci === 0 ? r.n : r.cells[ci - 1]).length <= 24);
+  });
+  return {
+    caption: rows.slice(0, hr).map(r => r.map(sheetClean).filter(Boolean).join(' ')).filter(Boolean),
+    rows: out, cols
+  };
+}
+
+function buildSheetTable(tab, rows) {
+  if (!rows || !rows.length) return null;
+  let T = null;
+  if (tab.tableMode === 'service') {
+    T = buildServiceTable(rows) || buildServiceTableTransposed(rows);
+    if (!T) {
+      T = buildGenericTable(rows, h => h.some(x => x.includes('dich vu') || x.includes('hang muc') || /sb\d/.test(x.replace(/\s/g, ''))));
+      if (T) { T.raw = true; T.warn = 'Sheet chưa có đủ cột nhóm búa SB10-SB43 · SB45-SB50 · SB60-SB81 · SB100+ — đang hiển thị nguyên bảng như trong Sheet.'; }
+    }
+  } else if (tab.tableMode === 'rental') {
+    T = buildRentalTable(rows);
+    if (!T) {
+      T = buildGenericTable(rows, h => h.some(x => x.includes('loai bua') || /thang/.test(x)));
+      if (T) { T.raw = true; T.warn = 'Sheet chưa có đúng cột Loại búa | 1 tháng | 2 tháng | 3 tháng | Vận chuyển — đang hiển thị nguyên bảng như trong Sheet.'; }
+    }
+  } else {
+    T = buildGenericTable(rows, h => h.some(x => x.includes('bao hanh')));
+    if (T) T.raw = true;
+  }
+  return T;
+}
+
+// Dữ liệu dự phòng (khi chưa kết nối được Sheet): giữ đúng các dòng vận chuyển của bản cũ, áp dụng chung cho mọi nhóm búa
+function defaultServiceTable() {
+  const same = v => [v, v, v, v];
+  return {
+    caption: [], fallback: true,
+    cols: [{label: 'Dịch vụ / hạng mục'}].concat(SB_GROUPS.map(g => ({label: g.label, num: true}))),
+    rows: [
+      {n: 'Vận chuyển + lắp đặt trong phạm vi 50km', dvt: 'Lần', cells: same('Miễn phí'), note: ''},
+      {n: 'Vận chuyển ngoài phạm vi 50km', dvt: 'km', cells: same('15000'), note: ''},
+      {n: 'Tự vận chuyển (xe 200 trở lên)', dvt: 'Lần', cells: same('-1000000'), note: 'Giảm 1.000.000đ'},
+      {n: 'Tự vận chuyển (xe 140 trở xuống)', dvt: 'Lần', cells: same('-500000'), note: 'Giảm 500.000đ'}
+    ]
+  };
+}
+
+async function syncSheetTableTab(tab) {
+  const csv = await fetchCSV(tab.sheetGid);
+  if (!csv) return false;
+  const T = buildSheetTable(tab, parseCSV(csv));
+  if (!T) return false;
+  tab.table = T;
+  tab.groups = [];
+  tab._live = true;
+  tab._liveCount = T.rows.filter(r => !r.sec).length;
+  tab._syncTime = new Date();
+  return true;
+}
+
+/* ---------- Vẽ bảng ---------- */
+function sheetRowText(r) { return norm([r.n, r.dvt, r.note].concat(r.cells || []).filter(Boolean).join(' ')); }
+function filterSheetRows(rows, q) {
+  const out = [];
+  let sec = null, secHit = false, pushed = false;
+  for (const r of rows) {
+    if (r.sec) { sec = r; secHit = norm(r.text).includes(q); pushed = false; continue; }
+    if (secHit || sheetRowText(r).includes(q)) {
+      if (sec && !pushed) { out.push(sec); pushed = true; }
+      out.push(r);
+    }
+  }
+  return out;
+}
+function sheetTableCount(tab) {
+  return tab.table ? tab.table.rows.filter(r => !r.sec).length : 0;
+}
+function sheetQuoteItem(tab, T, row, ci) {  // bấm vào 1 ô giá → báo giá đúng dịch vụ + đúng nhóm/gói
+  if (T.raw || (tab.tableMode !== 'service' && tab.tableMode !== 'rental')) return null;
+  const price = cellNum(row.cells[ci - 1]);
+  if (!price || price <= 0) return null;
+  const col = T.cols[ci].label;
+  let n, dvt, quality;
+  if (tab.tableMode === 'rental') {
+    if (/van chuyen/.test(norm(col))) { n = `Vận chuyển búa ${row.n}`; dvt = 'Lần'; quality = 'Dịch vụ'; }
+    else { n = `Thuê búa ${row.n} — ${col}`; dvt = 'Gói'; quality = 'Cho thuê'; }
+  } else { n = `${row.n} — búa ${col}`; dvt = row.dvt || 'Lần'; quality = 'Dịch vụ'; }
+  return {n, ac: '', xe: [], dk: '', kt: '', dvt, img: '', quality, priceFields: [{key: 'p', label: col}], prices: [price]};
+}
+
+function sheetTabView(tab, q, globalSearch) {
+  const T = tab.table;
+  if (!T || !T.rows || !T.rows.length) {
+    return {total: 0, html: `<div class="empty-tab"><div class="e-icon">🗂️</div><div class="e-title">Đang cập nhật</div><div class="e-sub">${esc(tab.emptyMsg || 'Đang tải dữ liệu…')}</div></div>`};
+  }
+  let rows = T.rows, hiCol = -1, hint = '';
+  if (q) {
+    const gi = tab.tableMode === 'service' && !T.raw && !globalSearch ? hammerGroupFromQuery(q) : -1;
+    if (gi >= 0) {                       // gõ mã búa (SB70, NB140…) → không lọc dòng, chỉ tô sáng đúng nhóm
+      hiCol = gi + 1;
+      hint = `<div class="vb-tbl-hint">🔨 “${esc(q.toUpperCase())}” thuộc nhóm <b>${SB_GROUPS[gi].label}</b> — cột được tô sáng bên dưới.</div>`;
+    } else rows = filterSheetRows(rows, q);
+  }
+  const dataRows = rows.filter(r => !r.sec);
+  if (!dataRows.length) return {total: 0, html: ''};
+
+  const generic = !!T.raw;
+  const showNote = !generic && dataRows.some(r => r.note);
+  const cols = T.cols;
+  const thead = '<tr>' + cols.map((c, i) => {
+    const cls = (i === 0 ? 'th-n' : (c.num ? 'th-v' : (c.center ? 'th-c' : 'th-t'))) + (i === hiCol ? ' hi' : '');
+    return `<th class="${cls}">${esc(c.label)}</th>`;
+  }).join('') + (showNote ? '<th class="th-t">Ghi chú</th>' : '') + '</tr>';
+
+  let body = '';
+  for (const r of rows) {
+    if (r.sec) { body += `<tr class="sec"><td colspan="${cols.length + (showNote ? 1 : 0)}">${esc(r.text)}</td></tr>`; continue; }
+    let tds = `<td class="c-n"><div class="nm-t">${esc(r.n)}</div>${r.dvt ? `<div class="cell-sub">ĐVT: ${esc(r.dvt)}</div>` : ''}</td>`;
+    r.cells.forEach((raw, k) => {
+      const ci = k + 1, col = cols[ci] || {};
+      const txt = fmtCell(raw);
+      let cls = col.num ? 'c-v' : (col.center ? 'c-c' : 'c-t');
+      const num = cellNum(raw);
+      if (col.num && num !== null) cls += ' num' + (num < 0 ? ' neg' : '');
+      if (ci === hiCol) cls += ' hi';
+      let attr = '';
+      const qi = sheetQuoteItem(tab, T, r, ci);
+      if (qi) { attr = ` data-qi="${_qReg.push(qi) - 1}" title="Bấm để tạo báo giá"`; cls += ' qable'; }
+      tds += `<td class="${cls}"${attr}>${txt ? esc(txt) : '<span class="cell-empty">—</span>'}</td>`;
+    });
+    if (showNote) tds += `<td class="c-t nt">${esc(r.note || '')}</td>`;
+    body += `<tr>${tds}</tr>`;
+  }
+
+  const stamp = tab._live && tab._syncTime
+    ? `✅ Đọc từ Google Sheet lúc ${String(tab._syncTime.getHours()).padStart(2, '0')}:${String(tab._syncTime.getMinutes()).padStart(2, '0')}`
+    : '📦 Dữ liệu mặc định — chưa đọc được từ Sheet';
+  const canQuote = !generic && (tab.tableMode === 'service' || tab.tableMode === 'rental');
+  const info = `<div class="vb-tbl-info"><span>${stamp}</span><span>${canQuote ? '💡 Bấm vào ô giá để tạo báo giá · ' : ''}${tab.tableMode === 'generic' ? '' : 'Đơn vị: VNĐ'}</span></div>`;
+  const warn = T.warn ? `<div class="vb-tbl-warn">⚠️ ${esc(T.warn)}</div>` : '';
+  const cap = (T.caption || []).length ? `<div class="vb-tbl-cap">${T.caption.map(esc).join('<br>')}</div>` : '';
+  const html = `${cap}${info}${warn}${hint}<div class="table-wrap vb-tbl-wrap"><table class="vb-tbl${generic ? ' generic' : ''}"><thead>${thead}</thead><tbody>${body}</tbody></table></div>`;
+  return {total: dataRows.length, html};
+}
+
+/* Bấm vào ô giá trong bảng dịch vụ / thuê búa → mở báo giá (bôi đen chữ để copy thì không mở) */
+document.getElementById('mainContent').addEventListener('click', e => {
+  const td = e.target.closest && e.target.closest('td[data-qi]');
+  if (!td) return;
+  if (window.getSelection && String(window.getSelection()).trim()) return;
+  const item = _qReg[+td.dataset.qi];
+  if (item) openQuote(item);
+});
+
 let TECH_SPEC_MAP = {};
 let TECH_SPEC_LIST = [];
 let techSpecLive = false;
@@ -1827,30 +2299,19 @@ const TABS = [
   ]},
  ]},
 
-{id:'thue-bua', label:'Thuê Búa', icon:'🏗️', sheetGid:1873276793,
- priceFields:[{key:'le',label:'Giá 1 tháng'},{key:'g1',label:'Giá 2 tháng'},{key:'g2',label:'Giá 3 tháng'}],
- fieldOrder:[{key:'vc',label:'VC/lượt',cls:'dvt'}],
- colAliases:{vc:'gia van chuyen'},
- groups:[],
+{id:'thue-bua', label:'Thuê Búa', icon:'🏗️', sheetGid:1873276793, tableMode:'rental',
+ /* V37: hiển thị đúng bảng Sheet: Loại búa | 1 tháng | 2 tháng | 3 tháng | Vận chuyển (xem buildRentalTable) */
+ priceFields:[], fieldOrder:[], groups:[], table:null,
  emptyMsg:'Đang tải dữ liệu thuê búa…'},
 
-{id:'dich-vu', label:'Giá Dịch Vụ', icon:'🛠️', sheetGid:1834850587,
- priceFields:[{key:'le',label:'Tại xưởng'},{key:'g1',label:'<50km'},{key:'g2',label:'50-100km'}],
- fieldOrder:[{key:'dvt',label:'ĐVT',cls:'dvt'}],
- groups:[
-  {cat:'Dịch Vụ Sửa Chữa & Vận Chuyển', items:[
-    {n:'Vận chuyển + lắp đặt trong phạm vi 50km', dvt:'Lần',le:0,g1:0,g2:0, note:'Miễn phí'},
-    {n:'Vận chuyển ngoài phạm vi 50km',           dvt:'km', le:15000,g1:15000,g2:15000},
-    {n:'Tự vận chuyển (xe 200 trở lên)',          dvt:'Lần',le:-1000000,g1:-1000000,g2:-1000000, note:'Giảm 1.000.000đ'},
-    {n:'Tự vận chuyển (xe 140 trở xuống)',        dvt:'Lần',le:-500000,g1:-500000,g2:-500000, note:'Giảm 500.000đ'},
-  ]},
- ]},
+{id:'dich-vu', label:'Giá Dịch Vụ', icon:'🛠️', sheetGid:1834850587, tableMode:'service',
+ /* V37: giá theo nhóm búa SB10-SB43 | SB45-SB50 | SB60-SB81 | SB100+ (xem buildServiceTable) */
+ priceFields:[], fieldOrder:[], groups:[], table:defaultServiceTable(),
+ emptyMsg:'Đang tải bảng giá dịch vụ…'},
 
-{id:'bao-hanh', label:'Bảo Hành', icon:'✅', sheetGid:1287497403,
- priceFields:[],
- fieldOrder:[{key:'bh_ncc',label:'BH NCC',cls:'dvt'},{key:'bh_cty',label:'BH Cty',cls:'dvt'}],
- colAliases:{bh_ncc:'thoi gian bao hanh cua ncc', bh_cty:'thoi gian bao hanh cua cong ty'},
- groups:[],
+{id:'bao-hanh', label:'Bảo Hành', icon:'✅', sheetGid:1287497403, tableMode:'generic',
+ /* V37: hiển thị nguyên bảng Sheet (đúng tiêu đề cột, đúng thứ tự dòng) */
+ priceFields:[], fieldOrder:[], groups:[], table:null,
  emptyMsg:'Đang tải thông tin bảo hành…'},
 
 {id:'yeu-thich', label:'Yêu Thích', icon:'❤️', _isFav:true,
@@ -2003,6 +2464,7 @@ function getTab(id) { return TABS.find(t => t.id === id); }
 function priceVal(v) { return (v === null || v === undefined || v === 0) ? null : v; }
 
 function itemTotalCount(tab) {
+  if (tab.tableMode) return sheetTableCount(tab);   // V37: tab dạng bảng Sheet
   return (tab.groups || []).reduce((s, g) => s + g.items.length, 0);
 }
 
@@ -2073,6 +2535,16 @@ function renderList() {
   let total = 0;
   let html = '';
 
+  // V37: Giá Dịch Vụ / Thuê Búa / Bảo Hành → luôn vẽ dạng bảng đúng như Sheet
+  if (tab && tab.tableMode && !(q.length > 0 && searchScopeAll)) {
+    const v = sheetTabView(tab, q);
+    document.getElementById('resultCount').textContent = v.total + ' dòng · ' + (tab.icon || '') + ' ' + tab.label;
+    main.innerHTML = v.html;
+    empty.style.display = (v.total === 0 && q) ? 'block' : 'none';
+    enhanceTables();
+    return;
+  }
+
   if (q.length > 0 && searchScopeAll) {
     // Global search: across every tab, grouped by tab
     const results = FLAT.filter(item => matches(item, q));
@@ -2086,6 +2558,14 @@ function renderList() {
       const t = getTab(tabId);
       html += `<div class="section-label">${t?.icon||''} ${t?.label || tabId}</div>`;
       html += renderGroupBlock(items, t);
+    }
+    // V37: tìm toàn danh mục → cả 3 tab dạng bảng cũng được tìm
+    for (const t of TABS) {
+      if (!t.tableMode) continue;
+      const v = sheetTabView(t, q, true);
+      if (!v.total) continue;
+      html += `<div class="section-label">${t.icon||''} ${t.label}</div>` + v.html;
+      total += v.total;
     }
   } else if (q.length > 0) {
     // Scoped search: only within the active tab
@@ -2840,7 +3320,25 @@ function printQuote() {
     if (!restoreQuoteDraft()) renderPrintQuote();
   }
   captureQuoteDraft();
+  // V37: đặt tên tài liệu = tên file → hộp thoại "Lưu dưới dạng PDF" tự điền đúng tên
+  const _oldTitle = document.title;
+  document.title = quoteFileName().replace(/\.pdf$/i, '');
+  const _restore = () => { document.title = _oldTitle; window.removeEventListener('afterprint', _restore); };
+  window.addEventListener('afterprint', _restore);
   window.print();
+}
+
+// V37: kiểm tra trang cuối của canvas có TRẮNG hoàn toàn không (nguyên nhân "trang trắng" khi xuất PDF)
+function pdfLastSliceBlank(canvas, pageW, innerH) {
+  try {
+    const pxPage = Math.floor(canvas.width * (innerH / pageW));   // đúng công thức chia trang của html2pdf
+    const n = Math.ceil(canvas.height / pxPage);
+    if (n < 2) return false;
+    const y0 = (n - 1) * pxPage, h = canvas.height - y0;
+    const d = canvas.getContext('2d').getImageData(0, y0, canvas.width, h).data;
+    for (let i = 0; i < d.length; i += 4) if (d[i] < 245 || d[i + 1] < 245 || d[i + 2] < 245) return false;
+    return true;
+  } catch (e) { return false; }
 }
 
 async function buildQuotePdfBlob() {
@@ -2858,15 +3356,31 @@ async function buildQuotePdfBlob() {
   if (typeof html2pdf === 'undefined') throw new Error('Không tải được bộ xuất PDF');
   sheet.classList.add('pdf-exporting');
   try {
+    // V37: lề trên/dưới do html2pdf giữ cho MỌI trang (trang 2+ không bị dính mép); tờ giấy = 210mm nên lề trái/phải = 0.
+    const M_TOP = 10, M_BOT = 12;
     const opt = {
-      margin: 0,
+      margin: [M_TOP, 0, M_BOT, 0],
       filename: quoteFileName(),
-      image: {type:'jpeg', quality:0.98},
-      html2canvas: {scale:2, useCORS:true, backgroundColor:'#ffffff', logging:false, scrollX:0, scrollY:0},
-      jsPDF: {unit:'mm', format:'a4', orientation:'portrait'},
-      pagebreak: {mode:['css','legacy']}
+      image: {type: 'jpeg', quality: 0.98},
+      // windowWidth cố định → PDF luôn ra bố cục A4 chuẩn, dù bấm từ điện thoại hay máy tính
+      html2canvas: {scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false, scrollX: 0, scrollY: 0, windowWidth: 1100},
+      jsPDF: {unit: 'mm', format: 'a4', orientation: 'portrait'},
+      // Chỉ ngắt trang theo CSS + không cắt ngang dòng bảng / khối thông số / điều khoản
+      pagebreak: {mode: ['css'], avoid: ['tr', '.tech-spec-block', '.quote-terms > div:not(#quoteTechSpecs)', '.quote-closing', '.quote-date-line']}
     };
-    return await html2pdf().set(opt).from(sheet).outputPdf('blob');
+    try {
+      let dropLast = false;
+      return await html2pdf().set(opt).from(sheet)
+        .toCanvas().get('canvas').then(cv => { dropLast = pdfLastSliceBlank(cv, 210, 297 - M_TOP - M_BOT); })
+        .toPdf().get('pdf').then(pdf => {
+          const n = pdf.internal.getNumberOfPages();
+          if (dropLast && n > 1) pdf.deletePage(n);                // bỏ trang cuối nếu trắng
+        })
+        .outputPdf('blob');
+    } catch (e1) {
+      // Dự phòng: nếu chuỗi xử lý nâng cao lỗi thì xuất theo cách đơn giản (vẫn dùng lề + ngắt trang mới)
+      return await html2pdf().set(opt).from(sheet).outputPdf('blob');
+    }
   } finally {
     sheet.classList.remove('pdf-exporting');
   }
@@ -3486,6 +4000,7 @@ function fixTabGroups(tab) {
 
 async function syncTabFromSheet(tab) {
   if (!tab.sheetGid) return false;
+  if (tab.tableMode) return syncSheetTableTab(tab);   // V37
   const csv = await fetchCSV(tab.sheetGid);
   if (!csv) return false;
   const rows = parseCSV(csv);
@@ -3583,7 +4098,7 @@ async function syncAll(manual) {
   const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   if (okCount > 0) {
     const liveInfo = TABS.filter(t=>t._live).map(t=>`${t.label}: ${t._liveCount||0}`).join(' | ');
-    badge.textContent = `✅ ONLINE · / danh mục · `;
+    badge.textContent = `✅ ONLINE · ${okCount}/${tabsWithSheet.length} danh mục · ${timeStr}`;
     badge.title = liveInfo + (techOk ? ` | Thông số KT Sheet: ${TECH_SPEC_LIST.length}` : ` | Thông số KT dự phòng: ${TECH_SPEC_LIST.length}`); updateTechSpecStatus(techOk);
     badge.className = 'sync-status live';
   } else {
