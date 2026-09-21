@@ -1016,9 +1016,13 @@ table.vb-tbl.generic td.c-c{white-space:pre-line}
 
 /* ===== V37: XUẤT PDF (html2pdf) — 1 tờ A4 đúng nội dung, không trang trắng ===== */
 .quote-sheet.pdf-exporting{
-  width:210mm!important;max-width:none!important;min-height:0!important;height:auto!important;
-  margin:0!important;padding:0 11mm!important;box-shadow:none!important;outline:none!important;
-  overflow:visible!important;background:#fff!important
+  box-sizing:border-box!important;
+  position:relative!important;left:0!important;top:0!important;transform:none!important;
+  width:210mm!important;max-width:210mm!important;min-height:0!important;height:auto!important;
+  margin:0!important;padding:10mm 11mm 12mm!important;
+  box-shadow:none!important;outline:none!important;
+  overflow:visible!important;background:#fff!important;
+  display:block!important
 }
 .quote-sheet.pdf-exporting .q-edit:empty:before{content:none!important}
 .quote-sheet.pdf-exporting .q-edit,.quote-sheet.pdf-exporting .quote-term-edit{border-bottom:none!important;background:transparent!important;outline:none!important}
@@ -3363,7 +3367,26 @@ async function buildQuotePdfBlob() {
       filename: quoteFileName(),
       image: {type: 'jpeg', quality: 0.98},
       // windowWidth cố định → PDF luôn ra bố cục A4 chuẩn, dù bấm từ điện thoại hay máy tính
-      html2canvas: {scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false, scrollX: 0, scrollY: 0, windowWidth: 1100},
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 794,
+        windowHeight: 1123,
+        width: 794,
+        onclone: function(doc){
+          const s = doc.getElementById('quoteSheet');
+          if(s){
+            s.classList.add('pdf-exporting');
+            s.style.width='210mm';
+            s.style.maxWidth='210mm';
+            s.style.margin='0';
+          }
+        }
+      },
       jsPDF: {unit: 'mm', format: 'a4', orientation: 'portrait'},
       // Chỉ ngắt trang theo CSS + không cắt ngang dòng bảng / khối thông số / điều khoản
       pagebreak: {mode: ['css'], avoid: ['tr', '.tech-spec-block', '.quote-terms > div:not(#quoteTechSpecs)', '.quote-closing', '.quote-date-line']}
