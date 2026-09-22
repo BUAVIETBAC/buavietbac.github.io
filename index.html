@@ -3359,13 +3359,16 @@ function printQuote() {
   window.print();
 }
 
-// V37: kiểm tra trang cuối của canvas có TRẮNG hoàn toàn không (nguyên nhân "trang trắng" khi xuất PDF)
-function pdfLastSliceBlank(canvas, pageW, innerH) {
+// V39: kiểm tra trang cuối của canvas có TRẮNG hoàn toàn không (nguyên nhân "trang trắng" khi xuất PDF)
+// FIX mất trang cuối: nhận đúng số trang THẬT mà html2pdf đã tạo (pageCount) để chia lát canvas,
+// thay vì tự tính lại pxPage từ pageW/innerH (dễ lệch phép quy đổi mm→px và làm rơi mất trang có nội dung thật).
+function pdfLastSliceBlank(canvas, pageCount) {
   try {
-    const pxPage = Math.floor(canvas.width * (innerH / pageW));   // đúng công thức chia trang của html2pdf
-    const n = Math.ceil(canvas.height / pxPage);
-    if (n < 2) return false;
-    const y0 = (n - 1) * pxPage, h = canvas.height - y0;
+    if (!canvas || pageCount < 2) return false;
+    const pxPage = canvas.height / pageCount;                 // chia đúng theo số trang thật đã render ra PDF
+    const y0 = Math.floor((pageCount - 1) * pxPage);
+    const h = canvas.height - y0;
+    if (h <= 0) return false;
     const d = canvas.getContext('2d').getImageData(0, y0, canvas.width, h).data;
     for (let i = 0; i < d.length; i += 4) if (d[i] < 245 || d[i + 1] < 245 || d[i + 2] < 245) return false;
     return true;
@@ -3400,12 +3403,13 @@ async function buildQuotePdfBlob() {
       pagebreak: {mode: ['css'], avoid: ['tr', '.tech-spec-block', '.quote-terms > div:not(#quoteTechSpecs)', '.quote-closing', '.quote-date-line']}
     };
     try {
-      let dropLast = false;
+      let canvasRef = null;
       return await html2pdf().set(opt).from(sheet)
-        .toCanvas().get('canvas').then(cv => { dropLast = pdfLastSliceBlank(cv, 210, 297 - M_TOP - M_BOT); })
+        .toCanvas().get('canvas').then(cv => { canvasRef = cv; })
         .toPdf().get('pdf').then(pdf => {
           const n = pdf.internal.getNumberOfPages();
-          if (dropLast && n > 1) pdf.deletePage(n);                // bỏ trang cuối nếu trắng
+          // V39: chỉ xoá trang cuối khi nó THỰC SỰ trắng theo đúng số trang thật (n) mà PDF vừa tạo ra
+          if (n > 1 && pdfLastSliceBlank(canvasRef, n)) pdf.deletePage(n);
         })
         .outputPdf('blob');
     } catch (e1) {
@@ -3453,7 +3457,7 @@ async function shareQuotePdf() {
     if (!blob) return;
     const file = new File([blob], quoteFileName(), {type:'application/pdf'});
     if (navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))) {
-      const p=currentCompanyProfile(); await navigator.share({title:`Báo giá ${p.short}`, text:p.name ? `Báo giá ${p.name}` : 'Báo giá', files:[file]});
+      await navigator.share({files:[file]});                    // chỉ gửi file PDF, không kèm text/title "Báo giá công ty..."
     } else {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
