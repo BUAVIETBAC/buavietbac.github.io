@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1a1a2e">
-<title>VIETBACBAOGIA-V36 PRO</title>
+<title>VIETBACBAOGIA-V42 </title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -1206,7 +1206,7 @@ div.co-ph:empty{min-height:1.3em}
   <div class="topbar-title">
     <span class="logo">🔨</span>
     <div>
-      <h1>VIETBACBAOGIA-V36 PRO</h1>
+      <h1>VIETBACBAOGIA-V42 </h1>
       <div class="calendar-pro" id="calendarPro">📅 Đang cập nhật lịch...</div>
       <div class="sub" id="topSub">Búa · Đầm · Kìm · Phụ Tùng · Dịch Vụ</div>
       <div class="ctr-bar">
@@ -1345,7 +1345,7 @@ div.co-ph:empty{min-height:1.3em}
 
 <!-- PRINT AREA -->
 <div class="print-area" id="printArea">
-  <div class="quote-version-badge">✅ VIETBACBAOGIA-V36 PRO · PDF FIX · KHÔNG TRANG TRẮNG · BẢNG KT · 3 MẪU CÔNG TY</div>
+  <div class="quote-version-badge">✅ VIETBACBAOGIA-V42  · PDF FIX · KHÔNG TRANG TRẮNG · BẢNG KT · 3 MẪU CÔNG TY</div>
   <div class="quote-company-toolbar" id="quoteCompanyToolbar">
     <span class="company-toolbar-label">Mẫu báo giá:</span>
     <button type="button" data-company="vietbac" onclick="setQuoteCompany('vietbac',true)">VIỆT BẮC</button>
@@ -1414,20 +1414,22 @@ div.co-ph:empty{min-height:1.3em}
 <div class="admin-overlay open" id="adminOverlay">
   <div class="admin-panel">
     <div class="logo" style="font-size:32px;text-align:center;margin-bottom:6px">🔨</div>
-    <h2 style="text-align:center">VIETBACBAOGIA-V36 PRO</h2>
+    <h2 style="text-align:center">VIETBACBAOGIA-V42 </h2>
     <div style="text-align:center;font-size:10px;color:var(--muted);margin-top:-12px;margin-bottom:8px">bản V42 · fix PDF + lịch sử theo tài khoản/thiết bị</div>
     <div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:18px">Đăng nhập bằng tài khoản được cấp để sử dụng bảng giá</div>
-    <input type="text" id="adminEmail" placeholder="Tài khoản (email / tên / số)…" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="text">
-    <input type="password" id="adminPass" placeholder="Mật khẩu (chữ, số hoặc cả hai)…" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="text">
+    <input type="text" id="adminEmail" placeholder="Tài khoản (email hoặc liên hệ admin)…" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="text">
+    <input type="password" id="adminPass" placeholder="Mật khẩu ***" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="text">
     <div style="font-size:12px;color:var(--muted);margin-bottom:12px;min-height:16px" id="adminMsg"></div>
     <div class="admin-actions">
       <button class="btn-primary" onclick="doLogin()" style="flex:1">Đăng nhập</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:14px">🔒 Chỉ dành cho nhân viên VietBắc đã được cấp tài khoản</div>
+    <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:14px">🔒 Chỉ dành cho nhân viên Việt Bắc đã được cấp tài khoản</div>
   </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 /* ========================================
    DATA — Toàn bộ sản phẩm từ tất cả sheets
@@ -3544,6 +3546,10 @@ async function buildQuotePdfBlob() {
   if (!quoteDraftDirty) renderPrintQuote();
   const sheet = document.getElementById('quoteSheet');
   await waitForQuoteImages(sheet);
+  // V42: bộ xuất PDF mới — tự chia trang theo từng dòng/khối (không dùng html2pdf nữa) → không mất đoạn dưới, không cắt ngang dòng
+  if (window.jspdf && window.jspdf.jsPDF && typeof html2canvas !== 'undefined') {
+    return await renderSheetToPdfBlobV42(sheet);
+  }
   if (typeof html2pdf === 'undefined') throw new Error('Không tải được bộ xuất PDF');
   sheet.classList.add('pdf-exporting');
   try {
@@ -3590,6 +3596,65 @@ async function buildQuotePdfBlob() {
     }
   } finally {
     sheet.classList.remove('pdf-exporting');
+  }
+}
+
+// V42: Xuất PDF A4 — dựng bản sao tờ báo giá ngoài màn hình, chụp 1 lần, rồi cắt từng trang tại ranh giới dòng/khối
+async function renderSheetToPdfBlobV42(sheet) {
+  const PX_W = 794;                                   // 210mm @96dpi
+  const M_TOP = 10, M_BOT = 12;                        // lề trên/dưới mỗi trang (mm)
+  const pageH = (297 - M_TOP - M_BOT) * PX_W / 210;    // chiều cao nội dung 1 trang (px nguồn)
+  const holder = document.createElement('div');
+  holder.style.cssText = 'position:absolute;left:0;top:0;width:' + PX_W + 'px;background:#fff;z-index:-1;pointer-events:none';
+  const clone = sheet.cloneNode(true);
+  clone.removeAttribute('contenteditable');
+  clone.classList.add('pdf-exporting');
+  holder.appendChild(clone);
+  document.body.appendChild(holder);
+  try {
+    await waitForQuoteImages(clone);
+    if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) {} }
+    await new Promise(r => requestAnimationFrame(() => r()));
+    const H = Math.ceil(Math.max(clone.scrollHeight, clone.getBoundingClientRect().height));
+    const top0 = clone.getBoundingClientRect().top;
+    // các khối KHÔNG được cắt ngang
+    const ivs = [];
+    clone.querySelectorAll('.quote-table tr,.quote-meta tr,.tech-spec-table tr,.tech-spec-block,.quote-terms>div:not(#quoteTechSpecs),.quote-closing,.quote-date-line,.quote-intro').forEach(el => {
+      const r = el.getBoundingClientRect();
+      const t = r.top - top0, b = r.bottom - top0;
+      if (b - t > 2 && b - t < pageH * 0.92) ivs.push({top: t, bottom: b});
+    });
+    const pages = []; let pos = 0;
+    while (H - pos > 2) {
+      let next = pos + pageH;
+      if (next >= H - 1) { pages.push([pos, H]); break; }
+      for (let g = 0; g < 60; g++) {
+        let best = null;
+        for (const iv of ivs) if (iv.top > pos + 30 && iv.top < next - 0.5 && iv.bottom > next + 0.5) { if (best === null || iv.top < best) best = iv.top; }
+        if (best === null) break;
+        next = best;
+      }
+      pages.push([pos, next]); pos = next;
+    }
+    const scale = Math.max(1, Math.min(2, 30000 / H));
+    const canvas = await html2canvas(holder, {scale: scale, useCORS: true, backgroundColor: '#ffffff', logging: false,
+      width: PX_W, height: H, windowWidth: 1100, windowHeight: H + 100});
+    const pdf = new window.jspdf.jsPDF({unit: 'mm', format: 'a4', orientation: 'portrait', compress: true});
+    const k = canvas.width / PX_W;                      // px canvas / px nguồn
+    pages.forEach((pg, i) => {
+      const y0 = Math.max(0, pg[0] - (i ? 1 : 0)), y1 = Math.min(H, pg[1] + 1);   // chồng 1px để giữ viền bảng
+      const sy = Math.round(y0 * k), sh = Math.max(1, Math.min(canvas.height - sy, Math.round((y1 - y0) * k)));
+      const pc = document.createElement('canvas');
+      pc.width = canvas.width; pc.height = sh;
+      const ctx = pc.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, pc.width, pc.height);
+      ctx.drawImage(canvas, 0, sy, canvas.width, sh, 0, 0, canvas.width, sh);
+      if (i) pdf.addPage();
+      pdf.addImage(pc.toDataURL('image/jpeg', 0.95), 'JPEG', 0, M_TOP, 210, sh / k / PX_W * 210);
+    });
+    return pdf.output('blob');
+  } finally {
+    holder.remove();
   }
 }
 
@@ -3833,7 +3898,8 @@ document.getElementById('adminPass').addEventListener('keydown', e => { if (e.ke
    Ghi: mỗi lần đăng nhập / đăng nhập sai / đăng xuất / mở lại phiên → gửi lên Google Apps Script (Code.gs)
         và ghi vào tab "LỊCH SỬ TRUY CẬP" của Sheet. Chưa cài APPS_SCRIPT_URL thì chỉ lưu tạm trên máy này.
    Xem: nút "📜 Lịch sử" chỉ hiện với tài khoản admin (cột CHỨC DANH nằm trong ADMIN_TITLES hoặc tài khoản trong ADMIN_ACCOUNTS). */
-const APPS_SCRIPT_URL = '';   // dán URL Web App (.../exec) của Code.gs vào đây
+let APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwfOUuZ3WhflfWdq8K2TH8g6JbMViDUa-qOatgRdnjsbxf-Q8_RwZ0qAfya_whaYjUR/exec';   // ← dán URL Web App (.../exec) của Code.gs vào giữa 2 dấu nháy (khuyên dùng, để mọi máy đều ghi lịch sử)
+try { if (!APPS_SCRIPT_URL) APPS_SCRIPT_URL = localStorage.getItem('vb_apps_url') || ''; } catch(e) {}
 const DEVICE_LOCK = false;    // true = mỗi tài khoản chỉ đăng nhập được trên 1 máy (cần APPS_SCRIPT_URL)
 const ADMIN_TITLES = ['admin','gdoc','giam doc','quan tri'];
 const ADMIN_ACCOUNTS = ['trunghieu.plk@gmail.com'];
@@ -3915,6 +3981,11 @@ async function loadAccessHistory() {
   const note = document.getElementById('histNote');
   box.innerHTML = '<div style="padding:18px;text-align:center;color:var(--muted)">⏳ Đang tải lịch sử…</div>';
   let rows = [], locks = {}, src = '', err = '';
+  if (!APPS_SCRIPT_URL) {
+    // Chưa cài URL → hỏi 1 lần và nhớ trên máy admin (nhớ dán cố định vào dòng APPS_SCRIPT_URL để các máy khác cũng ghi được)
+    const u = (prompt('Dán URL Web App Apps Script (kết thúc bằng /exec):') || '').trim();
+    if (/^https:\/\/script\.google\.com\/.+\/exec$/.test(u)) { APPS_SCRIPT_URL = u; try { localStorage.setItem('vb_apps_url', u); } catch(e) {} }
+  }
   if (APPS_SCRIPT_URL) {
     const key = adminKeyGet(false);
     if (!key) err = 'Chưa nhập ADMIN_KEY';
