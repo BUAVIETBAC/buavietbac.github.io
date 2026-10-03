@@ -412,6 +412,15 @@ main{padding:12px 12px 40px;max-width:720px;margin:0 auto}
 }
 .admin-panel input:focus{outline:none;border-color:var(--accent)}
 .admin-actions{display:flex;gap:8px}
+.hist-panel{max-width:920px}
+.sync-hist{margin-left:6px;font-size:14px}
+.sync-hist:hover{transform:none!important}
+.hist-wrap{overflow-x:auto}
+.hist-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.hist-tbl th,.hist-tbl td{border:1px solid var(--border);padding:6px 8px;text-align:left;vertical-align:top}
+.hist-tbl th{background:var(--surface2);position:sticky;top:0}
+.hist-tbl small{color:var(--muted)}
+.hist-mini{margin-top:3px;padding:2px 7px;font-size:11px;border-radius:6px;border:1px solid var(--border);background:var(--surface3);color:var(--text);cursor:pointer}
 
 @media(max-width:480px){
   .detail-grid{grid-template-columns:1fr 1fr}
@@ -1030,7 +1039,10 @@ table.vb-tbl.generic td.c-c{white-space:pre-line}
    Nguyên nhân: html2pdf đặt khung chứa (.html2pdf__container) với left:0;right:0;margin:auto → nó nằm GIỮA màn hình thật
    (VD cửa sổ 1600px → lệch ~400px), trong khi html2canvas dựng bản sao ở windowWidth:1100 (lệch ~150px) nhưng lại cắt theo
    toạ độ của màn hình thật → cắt mất bên trái, thừa trắng bên phải. Ép khung chứa sát mép trái để 2 bên luôn trùng nhau. */
-.html2pdf__container{left:0!important;right:auto!important;top:0!important;margin:0!important;transform:none!important}
+.html2pdf__container{left:0!important;right:auto!important;top:0!important;margin:0!important;transform:none!important;height:auto!important;max-height:none!important;overflow:visible!important}
+/* V40: FIX PDF MẤT ĐOẠN DƯỚI — lớp phủ của html2pdf cao đúng bằng cửa sổ trình duyệt + overflow:hidden nên nội dung dài bị cắt cụt.
+   Cho lớp phủ cao theo nội dung và không cắt. */
+.html2pdf__overlay{position:absolute!important;top:0!important;left:0!important;right:0!important;bottom:auto!important;height:auto!important;max-height:none!important;overflow:visible!important}
 .html2pdf__container .quote-sheet{margin:0!important;transform:none!important}
 
 /* ===== V39: MẪU "KHÁC" — THÔNG TIN CÔNG TY ĐỂ TRỐNG ===== */
@@ -1214,6 +1226,7 @@ div.co-ph:empty{min-height:1.3em}
     <div class="sync-row">
       <span class="sync-status syncing" id="syncStatus">🔄 Đang đồng bộ dữ liệu…</span>
       <button class="sync-refresh" onclick="syncAll(true)" title="Làm mới dữ liệu">↻</button>
+      <button class="sync-refresh sync-hist" id="btnHistory" onclick="openAccessHistory()" title="Lịch sử truy cập theo tài khoản (admin)" style="display:none">📜</button>
     </div>
 
     <!-- Search -->
@@ -1298,6 +1311,18 @@ div.co-ph:empty{min-height:1.3em}
         <input type="number" id="quoteQty" min="1" step="1" value="1" oninput="updatePreview()">
       </div>
       <div class="modal-row">
+        <label>Thuế VAT (%) — áp dụng cho cả báo giá · để trống = giá KHÔNG gồm thuế</label>
+        <div class="price-adjust">
+          <input type="text" inputmode="decimal" autocomplete="off" id="quoteVat" oninput="setQuoteVat(this.value,this)" placeholder="VD: 8 hoặc 10">
+          <span class="unit">%</span>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:6px">
+          <button type="button" class="btn-secondary" style="padding:5px 12px" onclick="setQuoteVat('8')">8%</button>
+          <button type="button" class="btn-secondary" style="padding:5px 12px" onclick="setQuoteVat('10')">10%</button>
+          <button type="button" class="btn-secondary" style="padding:5px 12px" onclick="setQuoteVat('')">Không thuế</button>
+        </div>
+      </div>
+      <div class="modal-row">
         <label>Ảnh sản phẩm <span id="quoteAutoImageStatus" class="auto-img-status">· tự động từ GitHub</span></label>
         <div class="quote-image-row">
           <input type="file" id="quoteImageInput" accept="image/*" onchange="handleQuoteImage(this)">
@@ -1326,9 +1351,15 @@ div.co-ph:empty{min-height:1.3em}
     <button type="button" data-company="vietbac" onclick="setQuoteCompany('vietbac',true)">VIỆT BẮC</button>
     <button type="button" data-company="tungson" onclick="setQuoteCompany('tungson',true)">TÙNG SƠN</button>
     <button type="button" data-company="khac" onclick="setQuoteCompany('khac',true)">KHÁC</button>
+    <span class="company-toolbar-label" style="margin-left:14px">Thuế VAT:</span>
+    <input type="text" inputmode="decimal" autocomplete="off" id="quoteVatInline" placeholder="để trống = không thuế" oninput="setQuoteVat(this.value,this)" style="width:130px;padding:6px 10px;border:1px solid #b8c0cc;border-radius:999px;font:600 12px Inter,Arial,sans-serif;text-align:center"> <span>%</span>
+    <button type="button" onclick="setQuoteVat('8')">8%</button>
+    <button type="button" onclick="setQuoteVat('10')">10%</button>
+    <button type="button" onclick="setQuoteVat('')">Không thuế</button>
   </div>
   <div class="quote-pro-status" id="quoteProStatus">
     <span class="qps" id="specSourceStatus">⚙ Thông số kỹ thuật: đang chuẩn bị</span>
+    <button type="button" class="qps" style="cursor:pointer" onclick="refreshQuoteSpecs(true)" title="Tải lại tab THÔNG SỐ BÚA và cập nhật bảng thông số">🔄 Cập nhật thông số từ Sheet</button>
     <span class="qps ok">✓ Logo: mẫu gốc PDF</span>
   </div>
   <div class="quote-screen-hint">Bấm trực tiếp vào <b>BẤT KỲ chữ hoặc số nào trong tờ báo giá</b> để sửa. V36 tự lấy <b>ảnh sản phẩm từ thư mục /images trên GitHub</b> để mọi thiết bị dùng chung; vẫn cho phép chọn ảnh thủ công để thay thế. <b>THÔNG SỐ KỸ THUẬT</b> giữ đúng bố cục mẫu. Phần in dùng <b>Times New Roman</b>.</div>
@@ -1362,14 +1393,32 @@ div.co-ph:empty{min-height:1.3em}
 </div>
 <button class="quote-cart-fab" id="quoteCartFab" onclick="showPrint(false)" title="Mở báo giá đang chọn">📄 Báo giá <span class="cnt" id="quoteCartCount">0</span></button>
 
+<!-- LỊCH SỬ TRUY CẬP (chỉ admin) -->
+<div class="admin-overlay" id="histOverlay">
+  <div class="admin-panel hist-panel">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <h2 style="margin:0;flex:1">📜 Lịch sử truy cập</h2>
+      <button class="btn-primary" onclick="loadAccessHistory()" style="padding:6px 10px">↻ Làm mới</button>
+      <button class="btn-primary" onclick="closeAccessHistory()" style="padding:6px 10px;background:#475569">✕ Đóng</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+      <select id="histAcc" onchange="renderAccessHistory()" style="flex:1;min-width:150px;padding:9px 10px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text)"></select>
+      <select id="histDev" onchange="renderAccessHistory()" style="flex:1;min-width:150px;padding:9px 10px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text)"></select>
+    </div>
+    <div id="histNote" style="font-size:11px;color:var(--muted);margin-bottom:8px"></div>
+    <div id="histBody" style="overflow:auto;max-height:62vh"></div>
+  </div>
+</div>
+
 <!-- ĐĂNG NHẬP BẮT BUỘC -->
 <div class="admin-overlay open" id="adminOverlay">
   <div class="admin-panel">
     <div class="logo" style="font-size:32px;text-align:center;margin-bottom:6px">🔨</div>
     <h2 style="text-align:center">VIETBACBAOGIA-V36 PRO</h2>
+    <div style="text-align:center;font-size:10px;color:var(--muted);margin-top:-12px;margin-bottom:8px">bản V42 · fix PDF + lịch sử theo tài khoản/thiết bị</div>
     <div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:18px">Đăng nhập bằng tài khoản được cấp để sử dụng bảng giá</div>
-    <input type="email" id="adminEmail" placeholder="Email…" autocomplete="username">
-    <input type="password" id="adminPass" placeholder="Mật khẩu…" autocomplete="current-password">
+    <input type="text" id="adminEmail" placeholder="Tài khoản (email / tên / số)…" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="text">
+    <input type="password" id="adminPass" placeholder="Mật khẩu (chữ, số hoặc cả hai)…" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="text">
     <div style="font-size:12px;color:var(--muted);margin-bottom:12px;min-height:16px" id="adminMsg"></div>
     <div class="admin-actions">
       <button class="btn-primary" onclick="doLogin()" style="flex:1">Đăng nhập</button>
@@ -2398,6 +2447,8 @@ function restoreQuoteDraft() {
   const sheet = document.getElementById('quoteSheet');
   if (!sheet || !quoteDraftDirty || !quoteDraftHtml) return false;
   sheet.innerHTML = quoteDraftHtml;
+  // V40: nếu VAT đã đổi kể từ lần lưu nháp → cập nhật lại số tiền/điều khoản VAT, giữ nguyên các chỗ sửa tay khác
+  if (quoteVatApplied !== quoteVatRate) refreshQuoteVatInSheet();
   return true;
 }
 let quoteCart = []; // V25: danh sách 1 hoặc nhiều sản phẩm chờ in báo giá
@@ -2900,7 +2951,7 @@ function applyCompanyProfileToSheet(refreshBodyDefaults){
   const setTxt=(id,val)=>{ const e=document.getElementById(id); if(e) e.textContent=val; };
   setTxt('printCompanyName',p.name); setTxt('printCompanyLine1',p.line1); setTxt('printCompanyLine2',p.line2); setTxt('printCompanyLine3',p.line3); setTxt('quoteSellerCompany',p.contact);
   if (refreshBodyDefaults) {
-    setTxt('quoteTerm1',p.term1); setTxt('quoteTerm2',p.term2); setTxt('quoteRequirement',p.requirement);
+    setTxt('quoteTerm1',quoteTerm1For(p)); setTxt('quoteTerm2',p.term2); setTxt('quoteRequirement',p.requirement);
     setTxt('quotePaymentLine',p.payment); setTxt('quoteWarrantyLine',p.warranty);
     setTxt('quoteValidityLine',`Hiệu lực của báo giá: Báo giá có hiệu lực trong vòng ${p.validityDays} ngày kể từ ngày báo giá.`);
     const host=document.getElementById('quoteTechSpecs'); if(host) host.innerHTML=renderTechSpecsSection(p);
@@ -2915,7 +2966,7 @@ function normalizeTechName(s){
 function addTechSpec(rec, overwrite){
   if (!rec || !rec.name) return;
   const key=normalizeTechName(rec.name); if(!key || key.length<2) return;
-  const clean={name:String(rec.name).trim(),mass:String(rec.mass||'').trim(),pressure:String(rec.pressure||'').trim(),flow:String(rec.flow||'').trim(),diameter:String(rec.diameter||'').trim(),machine:String(rec.machine||'').trim(),verify:rec.verify||'',source:rec.source||''};
+  const clean={name:String(rec.name).trim(),mass:String(rec.mass||'').trim(),pressure:String(rec.pressure||'').trim(),flow:String(rec.flow||'').trim(),diameter:String(rec.diameter||'').trim(),machine:String(rec.machine||'').trim(),verify:rec.verify||'',source:rec.source||'',live:!!rec.live};
   if (!overwrite && TECH_SPEC_MAP[key]) return;
   TECH_SPEC_MAP[key]=clean;
   const i=TECH_SPEC_LIST.findIndex(x=>x.key===key);
@@ -2933,62 +2984,107 @@ seedTechSpecs();
 function specHeaderIndex(headers, needles){
   return headers.findIndex(h=>needles.some(n=>h.includes(n)));
 }
-async function syncTechSpecsFromSheet(){
-  const csv=await fetchCSV(TECH_SPEC_GID); if(!csv){ updateTechSpecStatus(false); return false; }
-  const rows=parseCSV(csv); if(!rows.length){ updateTechSpecStatus(false); return false; }
-  let added=0, hr=-1;
-  // Dạng cột: TÊN HÀNG | Khối lượng búa | Áp lực làm việc | Lưu lượng dầu | Đường kính đinh | [Dùng cho xe]
-  for(let i=0;i<Math.min(rows.length,40);i++){
-    const hs=rows[i].map(normHeader);
-    const hasName=hs.some(h=>h.includes('ten hang')||h.includes('ten san pham')||h==='model'||h.includes('model')||h.includes('ten sp'));
-    const score=['khoi luong','ap luc','luu luong','duong kinh'].filter(k=>hs.some(h=>h.includes(k))).length;
-    if(hasName && score>=2){hr=i;break;}
-  }
-  if(hr>=0){
-    const h=rows[hr].map(normHeader);
-    let ni=specHeaderIndex(h,['ten hang','ten san pham','san pham','model','ten sp']); if(ni<0) ni=0;
-    const mi=specHeaderIndex(h,['khoi luong bua','khoi luong','trong luong']);
-    const pi=specHeaderIndex(h,['ap luc lam viec','ap luc']);
-    const fi=specHeaderIndex(h,['luu luong dau','luu luong']);
-    const di=specHeaderIndex(h,['duong kinh dinh','duong kinh']);
-    const xi=specHeaderIndex(h,['dung cho xe','xe phu hop','hang xe','tan']);
-    for(let r=hr+1;r<rows.length;r++){
-      const row=rows[r]; const name=String(row[ni]||'').trim(); if(!name) continue;
-      const norm=normHeader(name);
-      if(/^(bua han quoc|bua trung quoc|dam rung|kim bop|ghap go|cat co|luoi cay)/.test(norm)) continue;
-      const rec={name,mass:mi>=0?row[mi]:'',pressure:pi>=0?row[pi]:'',flow:fi>=0?row[fi]:'',diameter:di>=0?row[di]:'',machine:xi>=0?row[xi]:'',verify:'Google Sheet',source:'Google Sheet'};
-      if([rec.mass,rec.pressure,rec.flow,rec.diameter,rec.machine].some(v=>String(v||'').trim())){addTechSpec(rec,true);added++;}
-    }
-  }
-  // Dạng ma trận: Chỉ tiêu | ĐVT | MODEL 1 | MODEL 2 | ...
-  if(added===0){
-    hr=-1;
-    for(let i=0;i<Math.min(rows.length,40);i++){
-      const h=rows[i].map(normHeader);
-      if(h.some(x=>x.includes('chi tieu')) && h.some(x=>x==='dvt'||x.includes('don vi'))){hr=i;break;}
-    }
-    if(hr>=0){
-      const headers=rows[hr];
-      let startCol=2;
-      for(let c=startCol;c<headers.length;c++){
-        const name=String(headers[c]||'').trim(); if(!name || normHeader(name).includes('phu kien')) continue;
-        const rec={name,mass:'',pressure:'',flow:'',diameter:'',machine:'',verify:'Google Sheet',source:'Google Sheet'};
-        for(let r=hr+1;r<rows.length;r++){
-          const label=normHeader(rows[r][0]||''); const val=String(rows[r][c]||'').trim();
-          if(label.includes('khoi luong')) rec.mass=val;
-          else if(label.includes('ap luc')) rec.pressure=val;
-          else if(label.includes('luu luong')) rec.flow=val;
-          else if(label.includes('duong kinh')) rec.diameter=val;
-          else if(label.includes('dung cho xe')) rec.machine=val;
-        }
-        if([rec.mass,rec.pressure,rec.flow,rec.diameter,rec.machine].some(Boolean)){addTechSpec(rec,true);added++;}
-      }
-    }
-  }
-  techSpecLive=added>0;
-  updateTechSpecStatus(techSpecLive, added);
-  return techSpecLive;
+let techSpecSource = 'fallback'; // 'sheet' = vừa đồng bộ Sheet · 'cache' = bản Sheet lưu lần trước · 'fallback' = thư viện dự phòng
+const TECH_SPEC_CACHE_KEY = 'vb_tech_specs_cache_v1';
+function techSpecKind(label){
+  const l=normHeader(label);
+  if(l.includes('khoi luong')||l.includes('trong luong')) return 'mass';
+  if(l.includes('ap luc')) return 'pressure';
+  if(l.includes('luu luong')) return 'flow';
+  if(l.includes('duong kinh')) return 'diameter';
+  if(l.includes('dung cho xe')||l.includes('xe phu hop')||l.includes('hang xe')) return 'machine';
+  return '';
 }
+// Đọc TOÀN BỘ tab THÔNG SỐ BÚA: hỗ trợ dạng cột (mỗi dòng 1 model) và dạng ma trận (Chỉ tiêu | ĐVT | model…),
+// kể cả khi sheet có NHIỀU khối ma trận lặp lại hoặc nhiều dòng tiêu đề.
+function parseTechSpecRows(rows){
+  const recs={}; const order=[];
+  const cell=(r,i)=>(i>=0&&r[i]!=null)?String(r[i]).trim():'';
+  const put=(name,vals)=>{
+    const key=normalizeTechName(name); if(!key||key.length<2) return;
+    let rec=recs[key];
+    if(!rec){ rec=recs[key]={name:String(name).trim(),mass:'',pressure:'',flow:'',diameter:'',machine:''}; order.push(key); }
+    for(const k of ['mass','pressure','flow','diameter','machine']) if(vals[k]) rec[k]=vals[k];
+  };
+  let mode='', ctx=null;
+  for(let r=0;r<rows.length;r++){
+    const row=rows[r]; const hs=row.map(normHeader);
+    // --- tiêu đề dạng ma trận
+    const ci=hs.findIndex(h=>h.startsWith('chi tieu'));
+    const ui=hs.findIndex(h=>h==='dvt'||h.includes('don vi'));
+    if(ci>=0 && ui>=0){
+      const models=[];
+      for(let c=Math.max(ci,ui)+1;c<row.length;c++){
+        const nm=cell(row,c); if(!nm||normHeader(nm).includes('phu kien')) continue;
+        models.push({c,name:nm,vals:{}});
+      }
+      mode='matrix'; ctx={ci,models}; continue;
+    }
+    // --- tiêu đề dạng cột
+    const nameIdx=hs.findIndex(h=>h.includes('ten hang')||h.includes('ten san pham')||h==='model'||h.includes('ten sp'));
+    const kinds={}; hs.forEach((h,i)=>{ const k=techSpecKind(h); if(k&&kinds[k]==null) kinds[k]=i; });
+    if(nameIdx>=0 && Object.keys(kinds).length>=2){ mode='cols'; ctx={ni:nameIdx,kinds}; continue; }
+    // --- dòng dữ liệu
+    if(mode==='matrix'){
+      const k=techSpecKind(cell(row,ctx.ci)); if(!k) continue;
+      ctx.models.forEach(m=>{ const v=cell(row,m.c); m.vals[k]=v; put(m.name,{[k]:v}); });
+      // đảm bảo model xuất hiện kể cả khi mọi ô còn trống
+    } else if(mode==='cols'){
+      const name=cell(row,ctx.ni); if(!name) continue;
+      if(/^(bua han quoc|bua trung quoc|dam rung|kim bop|ghap go|cat co|luoi cay)/.test(normHeader(name))) continue;
+      const vals={}; for(const k in ctx.kinds) vals[k]=cell(row,ctx.kinds[k]);
+      if(Object.values(vals).some(Boolean)) put(name,vals);
+    }
+  }
+  return order.map(k=>recs[k]).filter(x=>x.mass||x.pressure||x.flow||x.diameter||x.machine);
+}
+function commitSheetTechSpecs(list){
+  // 100% theo Sheet: bỏ toàn bộ dữ liệu dự phòng/cũ, chỉ giữ những gì Sheet đang có.
+  TECH_SPEC_MAP={}; TECH_SPEC_LIST=[];
+  list.forEach(x=>addTechSpec({...x,verify:'Google Sheet',source:'Google Sheet',live:true},true));
+}
+function loadTechSpecCache(){
+  try{
+    const o=JSON.parse(localStorage.getItem(TECH_SPEC_CACHE_KEY)||'null');
+    if(o&&Array.isArray(o.list)&&o.list.length){ commitSheetTechSpecs(o.list); techSpecSource='cache'; return true; }
+  }catch(e){}
+  return false;
+}
+let _techSpecSyncing=null;
+async function syncTechSpecsFromSheet(){
+  if(_techSpecSyncing) return _techSpecSyncing;
+  _techSpecSyncing=(async()=>{
+    try{
+      const csv=await fetchCSV(TECH_SPEC_GID,true);
+      if(!csv){ techSpecLive=false; updateTechSpecStatus(false); return false; }
+      const rows=parseCSV(csv);
+      const list=parseTechSpecRows(rows);
+      if(!list.length){ techSpecLive=false; updateTechSpecStatus(false); return false; }
+      commitSheetTechSpecs(list);
+      try{ localStorage.setItem(TECH_SPEC_CACHE_KEY,JSON.stringify({t:Date.now(),list})); }catch(e){}
+      techSpecLive=true; techSpecSource='sheet';
+      updateTechSpecStatus(true,list.length);
+      return true;
+    }catch(e){ techSpecLive=false; updateTechSpecStatus(false); return false; }
+    finally{ _techSpecSyncing=null; }
+  })();
+  return _techSpecSyncing;
+}
+// Làm mới khối THÔNG SỐ KỸ THUẬT trên tờ báo giá bằng dữ liệu Sheet mới nhất.
+// force=false: không đè lên chỗ người dùng đã tự sửa tay trong bảng thông số.
+let quoteSpecEdited=false;
+async function refreshQuoteSpecs(force){
+  const ok=await syncTechSpecsFromSheet();
+  const open=document.getElementById('printArea').classList.contains('open');
+  const host=document.getElementById('quoteTechSpecs');
+  if(host && open && (force || !quoteSpecEdited)){
+    host.innerHTML=renderTechSpecsSection(currentCompanyProfile());
+    if(force) quoteSpecEdited=false;
+    captureQuoteDraft();
+  }
+  return ok;
+}
+loadTechSpecCache();
 function techModelToken(s){
   const t=stripDiacritics(String(s||'')).toUpperCase().replace(/[^A-Z0-9-]+/g,' ');
   const patterns=[/\bNBO\s*\d+[A-Z-]*\b/,/\bNB\s*\d+[A-Z-]*\b/,/\bRHB\s*\d+[A-Z-]*\b/,/\bMSB\s*\d+[A-Z-]*\b/,/\bVB\s*\d+[A-Z-]*\b/];
@@ -3006,13 +3102,16 @@ function deriveMachineFromItem(item){
   if(!m) m=text.match(/(?:khoảng\s*)?(\d+(?:[.,]\d+)?)\s*(?:~|–|—|-)\s*(\d+(?:[.,]\d+)?)\s*tấn/i);
   return m ? `${m[1]}~${m[2]}` : '';
 }
+function techWithMachine(rec,item){
+  return {...rec,machine:rec.machine||(rec.live?'':deriveMachineFromItem(item))};
+}
 function getTechSpecForItem(item){
   const key=normalizeTechName(item && item.n); if(!key) return null;
-  if(TECH_SPEC_MAP[key]) return {...TECH_SPEC_MAP[key],machine:TECH_SPEC_MAP[key].machine||deriveMachineFromItem(item)};
+  if(TECH_SPEC_MAP[key]) return techWithMachine(TECH_SPEC_MAP[key],item);
   const token=techModelToken(item&&item.n);
   if(token){
     const tk=normalizeTechName(token);
-    if(TECH_SPEC_MAP[tk]) return {...TECH_SPEC_MAP[tk],machine:TECH_SPEC_MAP[tk].machine||deriveMachineFromItem(item)};
+    if(TECH_SPEC_MAP[tk]) return techWithMachine(TECH_SPEC_MAP[tk],item);
   }
   let best=null,bestLen=0;
   for(const rec of TECH_SPEC_LIST){
@@ -3023,17 +3122,17 @@ function getTechSpecForItem(item){
       if(sameToken) break;
     }
   }
-  if(best) return {...best,machine:best.machine||deriveMachineFromItem(item)};
-  // Partial fallback: for a breaker not yet present in the technical library, still show the table using known diameter/model.
+  if(best) return techWithMachine(best,item);
   if(looksLikeBreaker(item)){
     const d=String(item&&item.dk||'').match(/\d+(?:[.,]\d+)?/);
-    return {name:token||String(item.n||'').trim(),mass:'',pressure:'',flow:'',diameter:d?d[0]:'',machine:deriveMachineFromItem(item),verify:'Chưa đủ dữ liệu',source:'Dữ liệu sản phẩm'};
+    return {name:token||String(item.n||'').trim(),mass:'',pressure:'',flow:'',diameter:d?d[0]:'',machine:techSpecSource==='fallback'?deriveMachineFromItem(item):'',verify:'Chưa có trong Sheet THÔNG SỐ BÚA',source:'Dữ liệu sản phẩm'};
   }
   return null;
 }
 function updateTechSpecStatus(live, added){
   const e=document.getElementById('specSourceStatus'); if(!e) return;
-  if(live){e.className='qps ok'; e.textContent=`✓ Thông số Sheet ONLINE · ${added||TECH_SPEC_LIST.length} model cập nhật`;}
+  if(techSpecSource==='sheet'){e.className='qps ok'; e.textContent=`✓ Thông số: Sheet THÔNG SỐ BÚA ONLINE · ${added||TECH_SPEC_LIST.length} model`;}
+  else if(techSpecSource==='cache'){e.className='qps fb'; e.textContent=`⚠ Sheet chưa phản hồi · dùng bản Sheet lưu lần trước (${TECH_SPEC_LIST.length} model)`;}
   else {e.className='qps fb'; e.textContent=`⚠ Sheet chưa phản hồi · đang dùng thư viện dự phòng ${TECH_SPEC_LIST.length} model`;}
 }
 function techDisplayName(s){
@@ -3186,6 +3285,61 @@ function waitForQuoteImages(root) {
   }));
 }
 
+/* ===== V40: THUẾ VAT TRÊN BÁO GIÁ =====
+   Giá nhập ở ô "Giá bán" là giá CHƯA thuế. Nếu nhập % VAT → đơn giá/thành tiền trên báo giá = giá × (1 + %VAT).
+   Không nhập VAT → giữ nguyên giá và điều khoản ghi "KHÔNG BAO GỒM thuế GTGT". */
+let quoteVatRate = 0;
+let quoteVatApplied = 0; // %VAT mà tờ báo giá đang hiển thị
+function parseVatRate(v) {
+  const n = parseFloat(String(v == null ? '' : v).replace(',', '.').replace(/[^\d.]/g, ''));
+  return isFinite(n) && n > 0 ? Math.min(n, 100) : 0;
+}
+function fmtVatPct(r) { return String(Math.round(r * 100) / 100).replace('.', ','); }
+function withVat(price) { return quoteVatRate > 0 ? Math.round(price * (1 + quoteVatRate / 100)) : price; }
+function vatPhrase(hadDa) {
+  return quoteVatRate > 0 ? `${hadDa ? 'ĐÃ ' : ''}BAO GỒM thuế GTGT ${fmtVatPct(quoteVatRate)}%` : 'KHÔNG BAO GỒM thuế GTGT';
+}
+const VAT_PHRASE_RE = /(ĐÃ\s+)?(?:KHÔNG\s+)?BAO GỒM thuế GTGT(?:\s+\d+(?:[.,]\d+)?\s*%)?/i;
+function quoteTerm1For(p) {
+  const base = String((p && p.term1) || '- Đơn giá trên BAO GỒM thuế GTGT ( tên hóa đơn có thể khác tên báo giá ).');
+  const m = base.match(VAT_PHRASE_RE);
+  if (!m) return base;
+  return base.replace(VAT_PHRASE_RE, vatPhrase(!!m[1]));
+}
+function syncQuoteVatInputs(srcEl) {
+  ['quoteVat', 'quoteVatInline'].forEach(id => {
+    const e = document.getElementById(id);
+    if (e && e !== srcEl) e.value = quoteVatRate > 0 ? String(quoteVatRate).replace('.', ',') : '';
+  });
+}
+function setQuoteVat(val, srcEl) {
+  quoteVatRate = parseVatRate(val);
+  syncQuoteVatInputs(srcEl);
+  updatePreview();
+  renderQuoteCartSummary();
+  if (document.getElementById('printArea').classList.contains('open')) refreshQuoteVatInSheet();
+}
+// Cập nhật tại chỗ (không dựng lại tờ báo giá) để KHÔNG mất các chỗ người dùng đã sửa tay.
+function refreshQuoteVatInSheet() {
+  const sheet = document.getElementById('quoteSheet'); if (!sheet) return;
+  let total = 0;
+  quoteCart.forEach((x, i) => {
+    const u = withVat(x.price);
+    total += u * x.qty;
+    const cu = sheet.querySelector(`[data-q-unit="${i}"]`); if (cu) cu.textContent = fmtNum(u);
+    const cl = sheet.querySelector(`[data-q-line="${i}"]`); if (cl) cl.textContent = fmtNum(u * x.qty);
+  });
+  quoteVatApplied = quoteVatRate;
+  const t = document.getElementById('quoteTotalValue'); if (t) t.textContent = fmtNum(total);
+  const t1 = document.getElementById('quoteTerm1');
+  if (t1) {
+    const m = (t1.textContent || '').match(VAT_PHRASE_RE);
+    if (m) t1.textContent = t1.textContent.replace(VAT_PHRASE_RE, vatPhrase(!!m[1]));
+    else t1.textContent = quoteTerm1For(currentCompanyProfile());
+  }
+  captureQuoteDraft();
+}
+
 function currentQuoteRow() {
   if (!quoteItem) return null;
   const price = Math.max(0, parseQuotePrice(document.getElementById('quotePrice').value) || quoteBasePrice || 0);
@@ -3211,6 +3365,7 @@ function openQuote(dataStr) {
   updatePreview();
   renderQuoteCartSummary();
   syncQuoteCompanyUI();
+  syncQuoteVatInputs();
   document.getElementById('quoteModal').classList.add('open');
   if (quoteCurrentImage) setAutoImageStatus('· đã có ảnh','');
   else hydrateCurrentQuoteImage();
@@ -3236,8 +3391,9 @@ function updatePreview() {
     <div class="pv-name">${esc(quoteItem.n)}</div>
     ${quoteCurrentImage ? `<div style="margin:8px 0"><img src="${escAttr(quoteCurrentImage)}" alt="Ảnh sản phẩm" style="width:110px;height:82px;object-fit:contain;background:#fff;border-radius:8px;border:1px solid var(--border)"></div>` : ''}
     <div style="margin-bottom:8px">${tags}</div>
-    <div class="pv-price">${fmt(price)}${quoteItem.dvt && quoteItem.dvt.length<=6 ? '<span class="price-unit">/'+esc(quoteItem.dvt)+'</span>' : ''}</div>
-    <div class="pv-note">Thành tiền: <b>${fmt(price * qty)}</b></div>
+    <div class="pv-price">${fmt(withVat(price))}${quoteItem.dvt && quoteItem.dvt.length<=6 ? '<span class="price-unit">/'+esc(quoteItem.dvt)+'</span>' : ''}</div>
+    ${quoteVatRate > 0 ? `<div class="pv-note">Giá chưa thuế ${fmt(price)} + VAT ${fmtVatPct(quoteVatRate)}%</div>` : `<div class="pv-note">Chưa gồm thuế GTGT</div>`}
+    <div class="pv-note">Thành tiền: <b>${fmt(withVat(price) * qty)}</b></div>
     ${note ? `<div class="pv-note">📝 ${esc(note)}</div>` : ''}
   `;
 }
@@ -3294,8 +3450,8 @@ function renderQuoteCartSummary() {
   if (!box) return;
   if (!quoteCart.length) { box.className = 'quote-cart-summary'; box.innerHTML = ''; return; }
   box.className = 'quote-cart-summary has-items';
-  box.innerHTML = `<div class="quote-cart-head"><span>Đang chọn ${quoteCart.length} sản phẩm</span><span>${fmt(quoteCart.reduce((s,x)=>s+x.price*x.qty,0))}</span></div>` +
-    `<div class="quote-cart-list">${quoteCart.map(x => `<div class="quote-cart-row"><span class="qc-name">${esc(x.n)} × ${x.qty}</span><span class="qc-price">${fmt(x.price*x.qty)}</span><button type="button" onclick="removeQuoteCartItem(${JSON.stringify(x.key).replace(/"/g,'&quot;')})" title="Bỏ khỏi báo giá">✕</button></div>`).join('')}</div>`;
+  box.innerHTML = `<div class="quote-cart-head"><span>Đang chọn ${quoteCart.length} sản phẩm</span><span>${fmt(quoteCart.reduce((s,x)=>s+withVat(x.price)*x.qty,0))}</span></div>` +
+    `<div class="quote-cart-list">${quoteCart.map(x => `<div class="quote-cart-row"><span class="qc-name">${esc(x.n)} × ${x.qty}</span><span class="qc-price">${fmt(withVat(x.price)*x.qty)}</span><button type="button" onclick="removeQuoteCartItem(${JSON.stringify(x.key).replace(/"/g,'&quot;')})" title="Bỏ khỏi báo giá">✕</button></div>`).join('')}</div>`;
 }
 
 function syncQuoteCartUI() {
@@ -3384,6 +3540,7 @@ async function buildQuotePdfBlob() {
   captureQuoteDraft();
   populateQuoteUserPhone(false);
   await hydrateQuoteCartImages();
+  try { await refreshQuoteSpecs(false); } catch(e) {}
   if (!quoteDraftDirty) renderPrintQuote();
   const sheet = document.getElementById('quoteSheet');
   await waitForQuoteImages(sheet);
@@ -3392,12 +3549,14 @@ async function buildQuotePdfBlob() {
   try {
     // V37: lề trên/dưới do html2pdf giữ cho MỌI trang (trang 2+ không bị dính mép); tờ giấy = 210mm nên lề trái/phải = 0.
     const M_TOP = 10, M_BOT = 12;
+    // V40: chiều cao cửa sổ ảo ≥ toàn bộ tờ báo giá → không bao giờ bị cắt theo chiều cao màn hình thật
+    const winH = Math.max(window.innerHeight || 0, Math.ceil((sheet.scrollHeight || 0) * 1.6) + 2000, 4000);
     const opt = {
       margin: [M_TOP, 0, M_BOT, 0],
       filename: quoteFileName(),
       image: {type: 'jpeg', quality: 0.98},
       // windowWidth cố định → PDF luôn ra bố cục A4 chuẩn, dù bấm từ điện thoại hay máy tính
-      html2canvas: {scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false, x: 0, y: 0, scrollX: 0, scrollY: 0, windowWidth: 1100},
+      html2canvas: {scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false, x: 0, y: 0, scrollX: 0, scrollY: 0, windowWidth: 1100, windowHeight: winH},
       jsPDF: {unit: 'mm', format: 'a4', orientation: 'portrait'},
       // Chỉ ngắt trang theo CSS + không cắt ngang dòng bảng / khối thông số / điều khoản
       pagebreak: {mode: ['css'], avoid: ['tr', '.tech-spec-block', '.quote-terms > div:not(#quoteTechSpecs)', '.quote-closing', '.quote-date-line']}
@@ -3405,7 +3564,19 @@ async function buildQuotePdfBlob() {
     try {
       let canvasRef = null;
       return await html2pdf().set(opt).from(sheet)
-        .toCanvas().get('canvas').then(cv => { canvasRef = cv; })
+        .toContainer().then(function () {
+          // V41: ép lớp phủ/khung chứa của html2pdf cao theo nội dung, không cắt (lỗi mất đoạn dưới)
+          const ov = this.prop.overlay, ct = this.prop.container;
+          if (ov) { ov.style.setProperty('position','absolute','important'); ov.style.setProperty('overflow','visible','important'); ov.style.setProperty('height','auto','important'); ov.style.setProperty('bottom','auto','important'); ov.style.setProperty('top','0','important'); }
+          if (ct) { ct.style.setProperty('overflow','visible','important'); ct.style.setProperty('height','auto','important'); ct.style.setProperty('max-height','none','important'); }
+        })
+        .toCanvas().get('canvas').then(function (cv) {
+          canvasRef = cv;
+          // V41: kiểm tra canvas có đủ chiều cao toàn bộ nội dung không; thiếu thì báo lỗi thay vì xuất PDF cụt
+          const ct = this.prop.container;
+          const need = ct ? ct.scrollHeight * (opt.html2canvas.scale || 2) : 0;
+          if (need && cv.height < need * 0.97) throw new Error('PDF_TRUNCATED');
+        })
         .toPdf().get('pdf').then(pdf => {
           const n = pdf.internal.getNumberOfPages();
           // V39: chỉ xoá trang cuối khi nó THỰC SỰ trắng theo đúng số trang thật (n) mà PDF vừa tạo ra
@@ -3413,6 +3584,7 @@ async function buildQuotePdfBlob() {
         })
         .outputPdf('blob');
     } catch (e1) {
+      if (e1 && e1.message === 'PDF_TRUNCATED') throw e1;
       // Dự phòng: nếu chuỗi xử lý nâng cao lỗi thì xuất theo cách đơn giản (vẫn dùng lề + ngắt trang mới)
       return await html2pdf().set(opt).from(sheet).outputPdf('blob');
     }
@@ -3480,7 +3652,7 @@ function saveQuoteTermsFromDom() {
   if (t1) quoteTerms.t1 = (t1.textContent || '').trim();
   if (t2) quoteTerms.t2 = (t2.textContent || '').trim();
 }
-function resetQuoteTerms() { const p=currentCompanyProfile(); quoteTerms = {t1:p.term1,t2:p.term2}; }
+function resetQuoteTerms() { const p=currentCompanyProfile(); quoteTerms = {t1:quoteTerm1For(p),t2:p.term2}; }
 
 function renderPrintQuote() {
   saveQuoteTermsFromDom();
@@ -3495,19 +3667,19 @@ function renderPrintQuote() {
       <td class="q-unit">${esc(x.dvt || 'Chiếc')}</td>
       <td class="q-qty">${x.qty}</td>
       <td class="q-quality"><span class="q-quality-text">${esc(x.quality || 'Hàng mới 100%')}</span></td>
-      <td class="q-money">${fmtNum(x.price)}</td>
-      <td class="q-money">${fmtNum(x.price*x.qty)}</td>
+      <td class="q-money" data-q-unit="${i}">${fmtNum(withVat(x.price))}</td>
+      <td class="q-money" data-q-line="${i}">${fmtNum(withVat(x.price)*x.qty)}</td>
     </tr>`).join('');
-  const total = quoteCart.reduce((s,x) => s + x.price * x.qty, 0);
+  const total = quoteCart.reduce((s,x) => s + withVat(x.price) * x.qty, 0);
   document.getElementById('printContent').innerHTML = `
     <table class="quote-table">
       <thead><tr><th class="q-stt">STT</th><th class="q-name">TÊN MẶT HÀNG</th><th class="q-unit">ĐVT</th><th class="q-qty">SL</th><th class="q-quality">CHẤT LƯỢNG</th><th class="q-money">ĐƠN GIÁ</th><th class="q-money">THÀNH TIỀN</th></tr></thead>
       <tbody>${rows}
-        <tr><td colspan="5" class="q-total-label">Tổng tiền hàng</td><td colspan="2" class="q-total-value">${fmtNum(total)}</td></tr>
+        <tr><td colspan="5" class="q-total-label">Tổng tiền hàng</td><td colspan="2" class="q-total-value" id="quoteTotalValue">${fmtNum(total)}</td></tr>
       </tbody>
     </table>
     <div class="quote-terms">
-      <div id="quoteTerm1" class="quote-term-edit" contenteditable="true" spellcheck="false" title="Bấm để sửa điều khoản">${esc(p.term1)}</div>
+      <div id="quoteTerm1" class="quote-term-edit" contenteditable="true" spellcheck="false" title="Bấm để sửa điều khoản">${esc(quoteTerm1For(p))}</div>
       <div id="quoteTerm2" class="quote-term-edit" contenteditable="true" spellcheck="false" title="Bấm để sửa điều khoản">${esc(p.term2)}</div>
       <div id="quoteRequirement" class="quote-requirement">${esc(p.requirement)}</div>
       <div id="quoteTechSpecs">${renderTechSpecsSection(p)}</div>
@@ -3519,9 +3691,11 @@ function renderPrintQuote() {
     </div>
     <div class="quote-closing">Rất mong được sự hợp tác của Quý khách!</div>
     <div class="quote-date-line">${p.city ? esc(p.city)+', ngày ' : 'Ngày '}${String(now.getDate()).padStart(2,'0')} tháng ${String(now.getMonth()+1).padStart(2,'0')} năm ${now.getFullYear()}</div>`;
-  quoteTerms={t1:p.term1,t2:p.term2};
+  quoteTerms={t1:quoteTerm1For(p),t2:p.term2};
   quoteDraftHtml = '';
   quoteDraftDirty = false;
+  quoteSpecEdited = false;
+  quoteVatApplied = quoteVatRate;
   syncQuoteCompanyUI();
 }
 
@@ -3538,15 +3712,9 @@ async function showPrint(saveCurrent) {
   closeModal();
   syncQuoteCartUI();
   window.scrollTo(0,0);
-  // V31: mở báo giá ngay bằng dữ liệu dự phòng, sau đó cập nhật từ Sheet nếu có mà không làm người dùng phải chờ.
-  if(!restored && !techSpecLive){
-    syncTechSpecsFromSheet().then(ok=>{
-      if(ok && !quoteDraftDirty && document.getElementById('printArea').classList.contains('open')){
-        const host=document.getElementById('quoteTechSpecs');
-        if(host) host.innerHTML=renderTechSpecsSection(currentCompanyProfile());
-      }
-    }).catch(()=>updateTechSpecStatus(false));
-  }
+  // V40: MỖI LẦN mở báo giá đều kéo lại Sheet THÔNG SỐ BÚA (kể cả bản nháp cũ) → luôn khớp dữ liệu mới nhất.
+  refreshQuoteSpecs(false).catch(()=>updateTechSpecStatus(false));
+  syncQuoteVatInputs();
 }
 
 function clearQuoteCart() {
@@ -3557,6 +3725,7 @@ function clearQuoteCart() {
   quoteBasePrice = 0;
   quoteCurrentImage = '';
   invalidateQuoteDraft();
+  quoteVatRate = 0; syncQuoteVatInputs();
   resetQuoteTerms();
   resetQuoteMeta();
   closePrint();
@@ -3573,7 +3742,7 @@ function closePrint() {
 // V30: mọi thay đổi chữ/số trong tờ A4 đều được lưu tạm để không mất khi đóng/mở lại hoặc xuất file.
 const quoteSheetEditable = document.getElementById('quoteSheet');
 if (quoteSheetEditable) {
-  quoteSheetEditable.addEventListener('input', captureQuoteDraft);
+  quoteSheetEditable.addEventListener('input', e => { if (e.target && e.target.closest && e.target.closest('#quoteTechSpecs')) quoteSpecEdited = true; captureQuoteDraft(); });
   quoteSheetEditable.addEventListener('blur', captureQuoteDraft, true);
 }
 
@@ -3595,10 +3764,12 @@ function paintUserPill() {
   } else {
     pill.textContent = '👤 Chưa đăng nhập';
   }
+  try { paintHistBtn(); } catch(e) {}
 }
 function confirmLogout() {
   if (!isLoggedIn) { showGate(); return; }
   if (confirm(`Đăng xuất khỏi tài khoản "${currentUser.name || currentUser.email}"?`)) {
+    logAccess('logout', currentUser, 'Đăng xuất');
     currentUser = null; isLoggedIn = false;
     try { localStorage.removeItem('vb_session'); } catch(e){}
     paintUserPill();
@@ -3609,23 +3780,33 @@ function confirmLogout() {
 async function doLogin() {
   const emailInput = document.getElementById('adminEmail').value || '';
   const passInput = document.getElementById('adminPass').value || '';
-  const email = emailInput.trim().toLowerCase();
-  const pass = passInput.trim();
+  const email = authCell(emailInput).toLowerCase();
+  const pass = authCell(passInput);
   const msg = document.getElementById('adminMsg');
   if (!email || !pass) {
-    msg.textContent = '⚠️ Nhập đầy đủ email và mật khẩu';
+    msg.textContent = '⚠️ Nhập đầy đủ tài khoản và mật khẩu';
     return;
   }
 
   // Luôn thử cập nhật tài khoản mới nhất từ Sheet trước khi kiểm tra
   try { await syncAuthFromSheet(); } catch(e) {}
 
-  const found = AUTHORIZED.find(u => {
-    const uEmail = String(u.email || '').trim().toLowerCase();
-    const uPass = String(u.password ?? '').trim();
-    return uEmail === email && uPass === pass && u.active !== false;
-  });
+  const acc = AUTHORIZED.filter(u => authCell(u.email).toLowerCase() === email);
+  const found = acc.find(u => authCell(u.password) === pass && u.active !== false);
 
+  if (found && DEVICE_LOCK && APPS_SCRIPT_URL) {
+    // Mỗi tài khoản chỉ dùng 1 máy: hỏi Apps Script (đăng ký máy lần đầu / chặn máy lạ)
+    try {
+      const q = `${APPS_SCRIPT_URL}?action=checkDevice&email=${encodeURIComponent(authCell(found.email))}&deviceId=${encodeURIComponent(getDeviceId())}&deviceNote=${encodeURIComponent(deviceLabel())}&_t=${Date.now()}`;
+      const j = await (await fetch(q, {cache:'no-store'})).json();
+      if (!j.ok) {
+        msg.textContent = j.reason === 'different_device'
+          ? `🔒 Tài khoản đã gắn với máy khác (${j.registeredDevice || 'không rõ'}). Liên hệ admin để mở khóa.`
+          : (j.reason === 'account_disabled' ? '⏳ Tài khoản chưa được xác nhận' : '❌ ' + (j.error || 'Không kiểm tra được thiết bị'));
+        return;
+      }
+    } catch(e) { msg.textContent = '⚠️ Không kiểm tra được thiết bị (mất mạng?). Thử lại.'; return; }
+  }
   if (found) {
     currentUser = {email: found.email, name: found.name, title: found.title, phone: found.phone || ''};
     isLoggedIn = true;
@@ -3633,12 +3814,216 @@ async function doLogin() {
     paintUserPill();
     populateQuoteUserPhone(true);
     hideGate();
+    logAccess('login', found, 'Đăng nhập thành công');
   } else {
-    msg.textContent = '❌ Sai email/mật khẩu, hoặc tài khoản chưa được xác nhận';
+    if (acc.length && acc.some(u => authCell(u.password) === pass && u.active === false)) {
+      msg.textContent = '⏳ Tài khoản chưa được xác nhận (cột XÁC NHẬN trong Sheet)';
+      logAccess('fail', {email: emailInput.trim()}, 'Tài khoản chưa xác nhận');
+    } else {
+      msg.textContent = '❌ Sai tài khoản hoặc mật khẩu';
+      logAccess('fail', {email: emailInput.trim()}, acc.length ? 'Sai mật khẩu' : 'Tài khoản không tồn tại');
+    }
   }
 }
 // Cho phép bấm Enter để đăng nhập
 document.getElementById('adminPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+
+/* ===== LỊCH SỬ TRUY CẬP THEO TÀI KHOẢN (admin xem) =====
+   Ghi: mỗi lần đăng nhập / đăng nhập sai / đăng xuất / mở lại phiên → gửi lên Google Apps Script (Code.gs)
+        và ghi vào tab "LỊCH SỬ TRUY CẬP" của Sheet. Chưa cài APPS_SCRIPT_URL thì chỉ lưu tạm trên máy này.
+   Xem: nút "📜 Lịch sử" chỉ hiện với tài khoản admin (cột CHỨC DANH nằm trong ADMIN_TITLES hoặc tài khoản trong ADMIN_ACCOUNTS). */
+const APPS_SCRIPT_URL = '';   // dán URL Web App (.../exec) của Code.gs vào đây
+const DEVICE_LOCK = false;    // true = mỗi tài khoản chỉ đăng nhập được trên 1 máy (cần APPS_SCRIPT_URL)
+const ADMIN_TITLES = ['admin','gdoc','giam doc','quan tri'];
+const ADMIN_ACCOUNTS = ['trunghieu.plk@gmail.com'];
+const ACCESS_EVT = {login:'Đăng nhập', fail:'Đăng nhập sai', logout:'Đăng xuất', resume:'Mở lại phiên'};
+
+function isAdminUser(u) {
+  if (!u) return false;
+  const t = stripDiacritics(String(u.title||'')).toLowerCase().trim();
+  const a = authCell(u.email).toLowerCase();
+  return ADMIN_TITLES.includes(t) || ADMIN_ACCOUNTS.includes(a);
+}
+function getDeviceId() {
+  try {
+    let id = localStorage.getItem('vb_device_id');
+    if (!id) { id = 'D' + Math.random().toString(36).slice(2, 8).toUpperCase() + Date.now().toString(36).slice(-3).toUpperCase(); localStorage.setItem('vb_device_id', id); }
+    return id;
+  } catch(e) { return 'D-NA'; }
+}
+function deviceLabel() {
+  const ua = navigator.userAgent || '';
+  const br = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /Firefox\//.test(ua) ? 'Firefox' : /(CocoonCoreBrowser|CriOS|Chrome)\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : 'Trình duyệt';
+  const os = /Windows/.test(ua) ? 'Windows' : /Android/.test(ua) ? 'Android' : /iPhone|iPad|iPod/.test(ua) ? 'iOS' : /Mac OS X/.test(ua) ? 'macOS' : /Linux/.test(ua) ? 'Linux' : 'Khác';
+  return `${os}/${br}`;
+}
+function fmtTime(d) {
+  const p = n => String(n).padStart(2,'0');
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+function logAccess(evt, user, note) {
+  try {
+    const rec = {
+      time: fmtTime(new Date()),
+      account: authCell(user && user.email),
+      name: (user && user.name) || '',
+      title: (user && user.title) || '',
+      event: ACCESS_EVT[evt] || evt,
+      device: deviceLabel(),
+      deviceId: getDeviceId(),
+      note: note || ''
+    };
+    // 1) luôn lưu tạm trên máy (tối đa 300 dòng) để không mất khi mất mạng / chưa cài Apps Script
+    let arr = [];
+    try { arr = JSON.parse(localStorage.getItem('vb_access_log') || '[]'); } catch(e){}
+    arr.push(rec); if (arr.length > 300) arr = arr.slice(-300);
+    try { localStorage.setItem('vb_access_log', JSON.stringify(arr)); } catch(e){}
+    // 2) gửi lên Sheet (text/plain + no-cors → không bị chặn CORS)
+    if (APPS_SCRIPT_URL) {
+      fetch(APPS_SCRIPT_URL, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(rec), keepalive:true}).catch(()=>{});
+    }
+  } catch(e) {}
+}
+// Mở lại trang khi còn phiên đăng nhập → ghi 1 dòng "Mở lại phiên" (tối đa 1 lần / 30 phút / máy)
+function logResumeOnce() {
+  if (!isLoggedIn || !currentUser) return;
+  try {
+    const last = +localStorage.getItem('vb_resume_ts') || 0;
+    if (Date.now() - last < 30*60*1000) return;
+    localStorage.setItem('vb_resume_ts', String(Date.now()));
+  } catch(e) {}
+  logAccess('resume', currentUser, 'Mở lại trang (phiên đã lưu)');
+}
+
+let _histRows = [], _histLocks = {};
+function parseHistTime(t) {
+  const m = String(t||'').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  return m ? new Date(+m[3], +m[2]-1, +m[1], +m[4], +m[5], +(m[6]||0)).getTime() : 0;
+}
+function adminKeyGet(force) {
+  let k = '';
+  try { k = sessionStorage.getItem('vb_admin_key') || ''; } catch(e) {}
+  if (!k || force) {
+    k = (prompt('Nhập ADMIN_KEY (đã đặt trong Code.gs) để xem lịch sử toàn hệ thống:') || '').trim();
+    try { if (k) sessionStorage.setItem('vb_admin_key', k); } catch(e) {}
+  }
+  return k;
+}
+async function loadAccessHistory() {
+  const box = document.getElementById('histBody');
+  const note = document.getElementById('histNote');
+  box.innerHTML = '<div style="padding:18px;text-align:center;color:var(--muted)">⏳ Đang tải lịch sử…</div>';
+  let rows = [], locks = {}, src = '', err = '';
+  if (APPS_SCRIPT_URL) {
+    const key = adminKeyGet(false);
+    if (!key) err = 'Chưa nhập ADMIN_KEY';
+    else {
+      try {
+        const res = await fetch(`${APPS_SCRIPT_URL}?action=listHistory&limit=2000&adminKey=${encodeURIComponent(key)}&_t=${Date.now()}`, {cache:'no-store'});
+        const j = await res.json();
+        if (j && j.ok) { rows = j.rows || []; locks = j.locks || {}; src = `Nguồn: Google Sheet · ${rows.length} dòng gần nhất (mọi thiết bị)`; }
+        else { err = (j && j.error) || 'Lỗi không rõ'; if (/adminKey/i.test(err)) { try { sessionStorage.removeItem('vb_admin_key'); } catch(e) {} } }
+      } catch(e) { err = 'Không kết nối được Apps Script (kiểm tra URL / quyền "Mọi người")'; }
+    }
+  } else err = 'Chưa cài APPS_SCRIPT_URL';
+  if (err) {
+    try { rows = JSON.parse(localStorage.getItem('vb_access_log') || '[]'); } catch(e) {}
+    src = `⚠️ ${err} — đang hiện lịch sử lưu trên máy này (chưa thấy các máy khác)`;
+  }
+  rows.forEach(r => r._t = parseHistTime(r.time));
+  rows.sort((a,b) => b._t - a._t);
+  _histRows = rows; _histLocks = locks;
+  note.textContent = src;
+  const selA = document.getElementById('histAcc'), selD = document.getElementById('histDev');
+  const keepA = selA.value, keepD = selD.value;
+  const accs = [...new Set(rows.map(r => r.account).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const devs = [...new Set(rows.map(r => r.deviceId).filter(Boolean))].sort();
+  selA.innerHTML = '<option value="">Tất cả tài khoản</option>' + accs.map(a => `<option value="${escAttr(a)}">${esc(a)}</option>`).join('');
+  selD.innerHTML = '<option value="">Tất cả thiết bị</option>' + devs.map(d => `<option value="${escAttr(d)}">${esc(d)}</option>`).join('');
+  selA.value = accs.includes(keepA) ? keepA : '';
+  selD.value = devs.includes(keepD) ? keepD : '';
+  renderAccessHistory();
+}
+function histPick(kind, v) {
+  document.getElementById(kind === 'acc' ? 'histAcc' : 'histDev').value = v;
+  renderAccessHistory();
+}
+async function histUnlock(acc) {
+  if (!confirm(`Mở khóa thiết bị của "${acc}"?\nLần đăng nhập kế tiếp sẽ đăng ký máy mới.`)) return;
+  const key = adminKeyGet(false);
+  if (!key || !APPS_SCRIPT_URL) return;
+  try {
+    const r = await fetch(`${APPS_SCRIPT_URL}?action=unlockDevice&email=${encodeURIComponent(acc)}&adminKey=${encodeURIComponent(key)}`, {cache:'no-store'});
+    const j = await r.json();
+    alert(j.ok ? '✅ ' + j.message : '❌ ' + (j.error || 'Lỗi'));
+    if (j.ok) loadAccessHistory();
+  } catch(e) { alert('Không kết nối được Apps Script'); }
+}
+function renderAccessHistory() {
+  const box = document.getElementById('histBody');
+  const acc = document.getElementById('histAcc').value;
+  const dev = document.getElementById('histDev').value;
+  let rows = _histRows;
+  if (acc) rows = rows.filter(r => r.account === acc);
+  if (dev) rows = rows.filter(r => r.deviceId === dev);
+  if (!rows.length) { box.innerHTML = '<div style="padding:18px;text-align:center;color:var(--muted)">Chưa có lịch sử truy cập.</div>'; return; }
+  const EV = ACCESS_EVT;
+  const isOk = e => e === EV.login || e === EV.resume;
+  const isBad = e => e === EV.fail || /Bị chặn/i.test(e || '');
+  let html = '';
+
+  // ---- Tổng hợp theo TÀI KHOẢN ----
+  if (!acc && !dev) {
+    const by = {};
+    rows.forEach(r => {
+      const k = r.account || '(không rõ)';
+      const o = by[k] || (by[k] = {account:k, name:'', title:'', ok:0, bad:0, last:0, lastDev:'', devs:new Set()});
+      if (isOk(r.event)) o.ok++;
+      if (isBad(r.event)) o.bad++;
+      if (r._t > o.last) { o.last = r._t; o.lastDev = r.device; }
+      if (r.deviceId) o.devs.add(r.deviceId);
+      if (r.name && !o.name) { o.name = r.name; o.title = r.title; }
+    });
+    const list = Object.values(by).sort((a,b)=>b.last-a.last);
+    html += '<div style="font-weight:700;margin:4px 0 6px">👤 Theo tài khoản (bấm dòng để lọc)</div><div class="hist-wrap"><table class="hist-tbl"><thead><tr><th>Tài khoản</th><th>Họ tên</th><th>Lần cuối</th><th>Lượt vào</th><th>Sai/chặn</th><th>Số máy</th><th>Máy đã đăng ký</th></tr></thead><tbody>' +
+      list.map(o => {
+        const lk = _histLocks[String(o.account).trim().toLowerCase()];
+        const reg = lk && lk.deviceId ? `${esc(lk.deviceNote || lk.deviceId)}<br><small>${esc(lk.deviceId)}</small> <button class="hist-mini" data-acc="${escAttr(o.account)}" onclick="event.stopPropagation();histUnlock(this.dataset.acc)">🔓 Mở khóa</button>` : '<small>—</small>';
+        return `<tr data-acc="${escAttr(o.account)}" onclick="histPick('acc',this.dataset.acc)" style="cursor:pointer"><td>${esc(o.account)}</td><td>${esc(o.name)}${o.title?' · '+esc(o.title):''}</td><td>${o.last?fmtTime(new Date(o.last)):''}<br><small>${esc(o.lastDev)}</small></td><td>${o.ok}</td><td style="${o.bad?'color:#ef4444;font-weight:700':''}">${o.bad}</td><td>${o.devs.size}</td><td>${reg}</td></tr>`;
+      }).join('') + '</tbody></table></div>';
+  }
+
+  // ---- Tổng hợp theo THIẾT BỊ ----
+  if (!dev) {
+    const bd = {};
+    rows.forEach(r => {
+      if (!r.deviceId) return;
+      const o = bd[r.deviceId] || (bd[r.deviceId] = {id:r.deviceId, label:r.device, n:0, last:0, accs:new Set()});
+      o.n++; if (r.account) o.accs.add(r.account);
+      if (r._t > o.last) { o.last = r._t; o.label = r.device || o.label; }
+    });
+    const dl = Object.values(bd).sort((a,b)=>b.last-a.last);
+    if (dl.length) html += `<div style="font-weight:700;margin:14px 0 6px">💻 Theo thiết bị${acc?' của '+esc(acc):''} (bấm dòng để lọc)</div><div class="hist-wrap"><table class="hist-tbl"><thead><tr><th>Mã máy</th><th>Thiết bị</th><th>Tài khoản đã dùng</th><th>Lần cuối</th><th>Số lượt</th></tr></thead><tbody>` +
+      dl.map(o => `<tr data-dev="${escAttr(o.id)}" onclick="histPick('dev',this.dataset.dev)" style="cursor:pointer"><td>${esc(o.id)}</td><td>${esc(o.label)}</td><td>${[...o.accs].map(esc).join(', ')}${o.accs.size>1?' <b style="color:#ef4444">⚠ nhiều tài khoản</b>':''}</td><td>${o.last?fmtTime(new Date(o.last)):''}</td><td>${o.n}</td></tr>`).join('') + '</tbody></table></div>';
+  }
+
+  // ---- Nhật ký chi tiết ----
+  html += '<div style="font-weight:700;margin:14px 0 6px">📜 Nhật ký chi tiết (mới nhất trước)</div><div class="hist-wrap"><table class="hist-tbl"><thead><tr><th>Thời gian</th><th>Tài khoản</th><th>Sự kiện</th><th>Thiết bị</th><th>Ghi chú</th></tr></thead><tbody>' +
+    rows.slice(0, 500).map(r => `<tr><td>${esc(r.time)}</td><td>${esc(r.account)}</td><td style="${isBad(r.event)?'color:#ef4444;font-weight:700':''}">${esc(r.event)}</td><td>${esc(r.device)}<br><small>${esc(r.deviceId)}</small></td><td>${esc(r.note)}</td></tr>`).join('') +
+    '</tbody></table></div>';
+  box.innerHTML = html;
+}
+function openAccessHistory() {
+  if (!isAdminUser(currentUser)) { alert('Chỉ tài khoản admin mới xem được lịch sử truy cập.'); return; }
+  document.getElementById('histOverlay').classList.add('open');
+  loadAccessHistory();
+}
+function closeAccessHistory() { document.getElementById('histOverlay').classList.remove('open'); }
+function paintHistBtn() {
+  const b = document.getElementById('btnHistory');
+  if (b) b.style.display = (isLoggedIn && isAdminUser(currentUser)) ? '' : 'none';
+}
 
 /* ===== ĐỒNG BỘ DỮ LIỆU TỪ GOOGLE SHEET ===== */
 function stripDiacritics(s) {
@@ -3899,11 +4284,12 @@ function parseSheetRows(rows, tab) {
   return finalGroups;
 }
 
-async function fetchCSV(gid) {
-  const urls = [
-    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}`,
-    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`,
-  ];
+async function fetchCSV(gid, preferExport) {
+  const bust = `&_t=${Date.now()}`; // chống cache: luôn lấy dữ liệu mới nhất vừa sửa trên Sheet
+  const gv = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}${bust}`;
+  const ex = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}${bust}`;
+  // gviz tự đoán kiểu cột nên có thể làm mất ô chữ trong cột số → bảng thông số dùng export (nguyên văn) trước.
+  const urls = preferExport ? [ex, gv] : [gv, ex];
   for (const url of urls) {
     try {
       const res = await fetch(url, {cache:'no-store'});
@@ -4053,8 +4439,16 @@ async function syncTabFromSheet(tab) {
   return true;
 }
 
+// Chuẩn hoá giá trị ô Sheet: số 1 / 1.0 / "1" đều là "1"; giữ nguyên chữ & số lẫn nhau
+function authCell(v) {
+  let t = String(v ?? '').replace(/^\uFEFF/, '').trim();
+  if (/^-?\d+\.0+$/.test(t)) t = t.replace(/\.0+$/, '');
+  return t;
+}
 async function syncAuthFromSheet() {
-  const csv = await fetchCSV(AUTH_GID);
+  // preferExport=true: lấy nguyên văn từng ô. gviz tự đoán kiểu cột nên cột MK/EMAIL lẫn số và chữ
+  // (vd 1, 2, hieu) sẽ bị MẤT các ô chữ → không đăng nhập được bằng mật khẩu chữ.
+  const csv = await fetchCSV(AUTH_GID, true);
   if (!csv) return false;
   const rows = parseCSV(csv);
   if (!rows.length) return false;
@@ -4071,16 +4465,16 @@ async function syncAuthFromSheet() {
   const list = [];
   for (let r = 1; r < rows.length; r++) {
     const row = rows[r];
-    const email = (row[emailIdx]||'').trim();
+    const email = authCell(row[emailIdx]);
     if (!email) continue;
     const activeRaw = confirmIdx !== -1 ? normHeader(row[confirmIdx]) : 'true';
-    const active = ['true','1','x','co','yes'].includes(activeRaw);
+    const active = ['true','1','x','co','yes','da xac nhan','ok'].includes(activeRaw);
     list.push({
       email,
-      password: (row[passIdx]||'').trim(),
-      name: nameIdx !== -1 ? (row[nameIdx]||'').trim() : email,
-      title: titleIdx !== -1 ? (row[titleIdx]||'').trim() : 'nhân viên',
-      phone: phoneIdx !== -1 ? (row[phoneIdx]||'').trim() : '',
+      password: authCell(row[passIdx]),
+      name: nameIdx !== -1 ? (authCell(row[nameIdx]) || email) : email,
+      title: titleIdx !== -1 ? (authCell(row[titleIdx]) || 'nhân viên') : 'nhân viên',
+      phone: phoneIdx !== -1 ? authCell(row[phoneIdx]) : '',
       active,
     });
   }
@@ -4090,7 +4484,7 @@ async function syncAuthFromSheet() {
 
   // Nếu phiên đăng nhập đã được lưu từ bản cũ, cập nhật lại SĐT/tên/chức danh từ DATA USER.
   if (isLoggedIn && currentUser && currentUser.email) {
-    const fresh = list.find(u => String(u.email||'').trim().toLowerCase() === String(currentUser.email||'').trim().toLowerCase());
+    const fresh = list.find(u => authCell(u.email).toLowerCase() === authCell(currentUser.email).toLowerCase());
     if (fresh) {
       currentUser = {email:fresh.email, name:fresh.name, title:fresh.title, phone:fresh.phone || ''};
       try { localStorage.setItem('vb_session', JSON.stringify(currentUser)); } catch(e){}
@@ -4143,7 +4537,7 @@ async function syncAll(manual) {
 
   // Nếu đang đăng nhập, kiểm tra lại quyền truy cập còn hợp lệ không sau khi có danh sách mới
   if (authOk && isLoggedIn && currentUser) {
-    const still = AUTHORIZED.find(u => u.email.toLowerCase() === currentUser.email.toLowerCase() && u.active !== false);
+    const still = AUTHORIZED.find(u => authCell(u.email).toLowerCase() === authCell(currentUser.email).toLowerCase() && u.active !== false);
     if (!still) {
       currentUser = null; isLoggedIn = false;
       try { localStorage.removeItem('vb_session'); } catch(e){}
@@ -4773,6 +5167,7 @@ paintUserPill();
 populateQuoteUserPhone(false);
 syncQuoteCartUI();
 if (isLoggedIn) hideGate(); else showGate();
+try { logResumeOnce(); } catch(e) {}
 syncQuoteCompanyUI();
 syncAll();
 setInterval(syncAll, 5 * 60 * 1000); // tự đồng bộ lại mỗi 5 phút
