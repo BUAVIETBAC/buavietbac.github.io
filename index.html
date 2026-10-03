@@ -3628,10 +3628,15 @@ async function renderSheetToPdfBlobV43(sheet) {
   document.body.appendChild(holder);
   try {
     await waitForQuoteImages(clone);
+    // giải mã xong ảnh rồi mới đo (ảnh chưa giải mã làm đo thiếu chiều cao → mất đoạn dưới)
+    await Promise.all([...clone.querySelectorAll('img')].map(im => (im.decode ? im.decode().catch(() => {}) : null)));
     if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) {} }
-    await new Promise(r => requestAnimationFrame(() => r()));
-    const H = Math.ceil(Math.max(clone.scrollHeight, clone.getBoundingClientRect().height));
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r())));
     const top0 = clone.getBoundingClientRect().top;
+    // chiều cao thật = đáy thấp nhất của MỌI phần tử bên trong (không tin scrollHeight)
+    let Hm = Math.max(clone.scrollHeight, clone.getBoundingClientRect().height);
+    clone.querySelectorAll('*').forEach(el => { const r = el.getBoundingClientRect(); if (r.height > 0) Hm = Math.max(Hm, r.bottom - top0); });
+    Hm = Math.ceil(Hm);
     // các khối KHÔNG được cắt ngang
     const ivs = [];
     clone.querySelectorAll('.quote-table tr,.quote-meta tr,.tech-spec-table tr,.tech-spec-block,.quote-terms>div:not(#quoteTechSpecs),.quote-closing,.quote-date-line,.quote-intro').forEach(el => {
@@ -3639,6 +3644,23 @@ async function renderSheetToPdfBlobV43(sheet) {
       const t = r.top - top0, b = r.bottom - top0;
       if (b - t > 2 && b - t < pageH * 0.92) ivs.push({top: t, bottom: b});
     });
+    // chụp DƯ thêm 500px phía dưới rồi tự cắt phần trắng thừa → không thể bị cụt dù đo lệch
+    const HR = Hm + 500;
+    const scale = Math.max(1, Math.min(2, 30000 / HR));
+    const canvas = await html2canvas(holder, {scale: scale, useCORS: true, backgroundColor: '#ffffff', logging: false,
+      width: PX_W, height: HR, windowWidth: Math.max(window.innerWidth || 0, 1100), windowHeight: HR + 100});
+    const k = canvas.width / PX_W;                      // px canvas / px nguồn
+    // tìm dòng cuối có nội dung thật
+    let lastRow = 0;
+    try {
+      const ctx0 = canvas.getContext('2d'), STRIP = 64;
+      outer: for (let y = canvas.height; y > 0; y -= STRIP) {
+        const y0 = Math.max(0, y - STRIP), d = ctx0.getImageData(0, y0, canvas.width, y - y0).data;
+        for (let i = d.length - 4; i >= 0; i -= 4) if (d[i] < 245 || d[i + 1] < 245 || d[i + 2] < 245) { lastRow = y0 + Math.floor(i / 4 / canvas.width) + 1; break outer; }
+      }
+    } catch (e) {}
+    const H = Math.min(HR, Math.max(Hm, Math.ceil(lastRow / k) + 6));
+    try { console.log('PDF V43 — đo:', Hm, 'px · nội dung thật:', Math.ceil(lastRow / k), 'px · trang:', Math.ceil(H / pageH)); } catch (e) {}
     const pages = []; let pos = 0;
     while (H - pos > 2) {
       let next = pos + pageH;
@@ -3651,11 +3673,7 @@ async function renderSheetToPdfBlobV43(sheet) {
       }
       pages.push([pos, next]); pos = next;
     }
-    const scale = Math.max(1, Math.min(2, 30000 / H));
-    const canvas = await html2canvas(holder, {scale: scale, useCORS: true, backgroundColor: '#ffffff', logging: false,
-      width: PX_W, height: H, windowWidth: 1100, windowHeight: H + 100});
     const pdf = new window.jspdf.jsPDF({unit: 'mm', format: 'a4', orientation: 'portrait', compress: true});
-    const k = canvas.width / PX_W;                      // px canvas / px nguồn
     pages.forEach((pg, i) => {
       const y0 = Math.max(0, pg[0] - (i ? 1 : 0)), y1 = Math.min(H, pg[1] + 1);   // chồng 1px để giữ viền bảng
       const sy = Math.round(y0 * k), sh = Math.max(1, Math.min(canvas.height - sy, Math.round((y1 - y0) * k)));
