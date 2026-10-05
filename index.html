@@ -1386,7 +1386,16 @@ html[data-theme="dark"] .action-row .view-btn.active{background:linear-gradient(
 .tab-scroll::-webkit-scrollbar,.cat-nav::-webkit-scrollbar{display:none}
 .tab-btn,.cat-chip{flex:0 0 auto;scroll-snap-align:center;border-radius:999px!important;padding:8px 14px!important;font-weight:600;font-size:12.5px;white-space:nowrap}
 .tab-btn.active{transform:translateY(-1px)}
-.cat-nav{position:sticky;top:0;z-index:5}
+
+/* Nút mũi tên ‹ › cho thanh tab nhỏ & thanh danh mục */
+.vb-arr{position:sticky;flex:0 0 auto;align-self:center;z-index:3;width:30px;height:30px;border-radius:50%;border:1px solid var(--border);
+  background:var(--surface);color:var(--pro-blue);font-size:18px;line-height:1;cursor:pointer;font-family:inherit;padding:0;
+  box-shadow:0 2px 8px rgba(20,33,61,.22);display:flex;align-items:center;justify-content:center;transition:opacity .15s}
+.vb-arr.l{left:0;margin-right:-30px}.vb-arr.r{right:0;margin-left:-30px}
+.vb-arr:hover{background:var(--pro-blue);color:#fff}
+.vb-arr[hidden]{display:none}
+.cat-nav{-webkit-mask-image:none!important;mask-image:none!important}
+@media(hover:none){.vb-arr{display:none}}
 
 /* ---------- 4. THẺ SẢN PHẨM & BẢNG ---------- */
 .product-card{border-radius:var(--pro-r)!important}
@@ -1430,17 +1439,38 @@ table.excel-table td.nm{font-weight:600}
 @media print{.topbar,.theme-btn,.quote-cart-fab{display:none!important}}
 </style>
 <script id="vb-pro-js">
-/* Cuộn chuột dọc -> cuộn ngang cho dãy tab (PC) + tự cuộn tab đang chọn vào giữa */
+/* Lăn chuột trên thanh tab nhỏ / danh mục / bảng rộng => cuộn NGANG thanh đó, không cuộn cả trang.
+   Chỉ khi thanh đã tới đầu/cuối mới trả lại cho trang cuộn. Tab đang chọn tự vào giữa. Có nút ‹ › cho PC. */
 (function(){
+  var SEL='.cat-nav,.tab-scroll,.veh-chips';
+  document.addEventListener('wheel',function(e){
+    var t=e.target.closest&&e.target.closest(SEL); if(!t||e.ctrlKey) return;
+    if(t.scrollWidth<=t.clientWidth+2) return;
+    var d=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY; if(!d) return;
+    if(e.deltaMode===1) d*=32;
+    var max=t.scrollWidth-t.clientWidth;
+    if((d<0&&t.scrollLeft<=0)||(d>0&&t.scrollLeft>=max-1)) return;
+    t.scrollLeft+=d; e.preventDefault();
+  },{passive:false,capture:true});
+
+  function arrows(n){
+    if(n.querySelector(':scope>.vb-arr')) return;
+    var L=document.createElement('button'),R=document.createElement('button');
+    L.type=R.type='button'; L.className='vb-arr l'; R.className='vb-arr r'; L.textContent='‹'; R.textContent='›';
+    L.setAttribute('aria-label','Trước'); R.setAttribute('aria-label','Sau');
+    n.insertBefore(L,n.firstChild); n.appendChild(R);
+    function upd(){var m=n.scrollWidth-n.clientWidth; L.hidden=n.scrollLeft<=2; R.hidden=n.scrollLeft>=m-2||m<=2;}
+    L.onclick=function(e){e.stopPropagation();n.scrollBy({left:-Math.max(200,n.clientWidth*.6),behavior:'smooth'})};
+    R.onclick=function(e){e.stopPropagation();n.scrollBy({left:Math.max(200,n.clientWidth*.6),behavior:'smooth'})};
+    if(!n.__vbS){n.__vbS=1;n.addEventListener('scroll',function(){var l=n.querySelector(':scope>.vb-arr.l'),r=n.querySelector(':scope>.vb-arr.r');if(!l||!r)return;var m=n.scrollWidth-n.clientWidth;l.hidden=n.scrollLeft<=2;r.hidden=n.scrollLeft>=m-2||m<=2;},{passive:true});}
+    setTimeout(upd,60); setTimeout(upd,500);
+  }
+  function scan(){document.querySelectorAll('.cat-nav,.tab-scroll').forEach(arrows)}
+  function center(){var a=document.querySelector('#tabScroll .tab-btn.active'); if(a) try{a.scrollIntoView({inline:'center',block:'nearest'})}catch(e){}}
   function boot(){
-    var t=document.getElementById('tabScroll'); if(!t) return;
-    t.addEventListener('wheel',function(e){
-      if(Math.abs(e.deltaY)>Math.abs(e.deltaX)&&t.scrollWidth>t.clientWidth){t.scrollLeft+=e.deltaY;e.preventDefault();}
-    },{passive:false});
-    new MutationObserver(function(){
-      var a=t.querySelector('.tab-btn.active');
-      if(a&&a.scrollIntoView) try{a.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'})}catch(e){}
-    }).observe(t,{subtree:true,attributes:true,attributeFilter:['class']});
+    scan(); center();
+    new MutationObserver(function(m){scan(); if(m.some(function(x){return x.target.closest&&x.target.closest('#tabScroll')})) center();})
+      .observe(document.body,{childList:true,subtree:true});
   }
   if(document.readyState!=='loading') boot(); else document.addEventListener('DOMContentLoaded',boot);
 })();
