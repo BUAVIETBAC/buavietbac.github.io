@@ -1313,6 +1313,8 @@ html[data-theme="light"] .copy-fast:hover{background:#d2e4fc!important}
 .btn-quote:active,.btn-primary:active,.cat-chip:active{transform:scale(.97)}
 </style>
 <style id="vb-pro-ui">
+.tech-accessory-item.acc-blank{min-height:1.25em;border-bottom:1px dotted #bbb}
+@media print{.tech-accessory-item.acc-blank{border-bottom:none}}
 /* ===== VB PRO UI LAYER (chỉ ghi đè giao diện, không đổi logic) ===== */
 :root{--pro-r:14px;--pro-navy:#0b2a5b;--pro-blue:#0b5ed7;--pro-orange:#e8590c}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
@@ -1642,6 +1644,7 @@ table.excel-table td.nm{font-weight:600}
     <button type="button" class="qtoggle" id="btnVatInclInline" onclick="setQuoteVatIncl(!quoteVatIncl)">Giá đã gồm thuế</button>
     <button type="button" class="qtoggle" id="btnExactName" onclick="toggleExactName()">Xuất đúng tên hàng</button>
     <button type="button" class="qtoggle" id="btnShowReq" onclick="toggleShowReq()">Hiện “Yêu cầu” xe</button>
+    <button type="button" class="qtoggle" id="btnShowAcc" onclick="toggleShowAcc()" title="Tắt khi phụ kiện khác loại búa (VD: gắp gỗ) — tự nhập tay phụ kiện">Phụ kiện búa mới</button>
   </div>
   <div class="quote-pro-status" id="quoteProStatus">
     <span class="qps" id="specSourceStatus">⚙ Thông số kỹ thuật: đang chuẩn bị</span>
@@ -3452,7 +3455,7 @@ function renderTechSpecsSection(profile){
   return chunks.map((group,gi)=>{
     // V33: giữ cột phụ kiện rowspan xuyên suốt cả bảng như mẫu PDF gốc.
     // Không tách THEAD/TBODY vì rowspan không được phép vượt qua nhóm hàng của bảng.
-    const accessory=`<td class="tech-accessory" rowspan="${criteria.length+1}"><div class="tech-accessory-title">Phụ kiện đi kèm búa mới</div>${profile.accessories.map(a=>`<span class="tech-accessory-item">${esc(a)}</span>`).join('')}</td>`;
+    const accessory=`<td class="tech-accessory" data-acc-mode="${quoteShowAcc?'on':'off'}" rowspan="${criteria.length+1}">${accInnerHTML(profile.accessories)}</td>`;
     const head=`<tr><th class="tech-criterion">Chỉ tiêu</th><th class="tech-unit">ĐVT</th>${group.map(x=>`<th class="tech-model">${esc(techDisplayName(x.spec.name||x.item.n))}</th>`).join('')}${accessory}</tr>`;
     const body=criteria.map(cr=>`<tr><td class="tech-criterion">${cr[0]}</td><td class="tech-unit">${cr[1]}</td>${group.map(x=>`<td>${esc(x.spec[cr[2]]||'')}</td>`).join('')}</tr>`).join('');
     return `<div class="tech-spec-block">${gi===0?'<div class="tech-spec-title">THÔNG SỐ KỸ THUẬT</div>':''}<table class="tech-spec-table">${head}${body}</table></div>`;
@@ -3614,6 +3617,7 @@ function syncToggleButtons() {
   set('btnVatInclInline', quoteVatIncl, 'Giá đã gồm thuế');
   set('btnExactName', quoteExactName, 'Xuất đúng tên hàng');
   set('btnShowReq', quoteShowReq, 'Hiện “Yêu cầu” xe');
+  set('btnShowAcc', quoteShowAcc, 'Phụ kiện búa mới');
 }
 function toggleExactName() {
   quoteExactName = !quoteExactName;
@@ -3627,6 +3631,37 @@ function toggleExactName() {
   }
   syncToggleButtons();
   captureQuoteDraft();
+}
+/* ===== PHỤ KIỆN ĐI KÈM: ẨN/HIỆN phụ kiện búa mới; ẨN => tiêu đề "Phụ kiện đi kèm:" + các dòng trống tự nhập tay ===== */
+let quoteShowAcc = true;
+try { if (localStorage.getItem('vb_show_acc') === '0') quoteShowAcc = false; } catch(e){}
+const ACC_BLANK_LINES = 4;
+function accBlankHTML() {
+  return '<div class="tech-accessory-title">Phụ kiện đi kèm:</div>' +
+    Array.from({length: ACC_BLANK_LINES}, () => '<span class="tech-accessory-item acc-blank">\u200B</span>').join('');
+}
+function accInnerHTML(list) {
+  if (!quoteShowAcc) return accBlankHTML();
+  return '<div class="tech-accessory-title">Phụ kiện đi kèm búa mới</div>' +
+    (list || []).map(a => `<span class="tech-accessory-item">${esc(a)}</span>`).join('');
+}
+function applyAccVisibility() {
+  document.querySelectorAll('#quoteSheet .tech-accessory, #printArea .tech-accessory').forEach(td => {
+    // giữ lại nội dung của chế độ đang rời đi (kể cả phần người dùng đã gõ) để bật/tắt lại không mất
+    if (td.dataset.accMode === (quoteShowAcc ? 'on' : 'off')) return;
+    const prevMode = td.dataset.accMode || 'on';
+    td.dataset['acc' + prevMode.charAt(0).toUpperCase() + prevMode.slice(1)] = td.innerHTML;
+    const want = quoteShowAcc ? td.dataset.accOn : td.dataset.accOff;
+    td.innerHTML = want != null ? want : (quoteShowAcc ? td.innerHTML : accBlankHTML());
+    td.dataset.accMode = quoteShowAcc ? 'on' : 'off';
+  });
+}
+function toggleShowAcc() {
+  quoteShowAcc = !quoteShowAcc;
+  try { localStorage.setItem('vb_show_acc', quoteShowAcc ? '1' : '0'); } catch(e){}
+  applyAccVisibility();
+  syncToggleButtons();
+  try { captureQuoteDraft(); } catch(e){}
 }
 function toggleShowReq() {
   quoteShowReq = !quoteShowReq;
