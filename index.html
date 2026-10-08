@@ -1507,7 +1507,7 @@ table.excel-table td.nm{font-weight:600}
     <!-- Sync -->
     <div class="sync-row">
       <span class="sync-status syncing" id="syncStatus">🔄 Đang đồng bộ dữ liệu…</span>
-      <button class="sync-refresh" onclick="syncAll(true)" title="Làm mới dữ liệu">↻</button>
+      <button class="sync-refresh" onclick="syncAllSafe(true)" title="Làm mới dữ liệu">↻</button>
       <button class="sync-refresh sync-hist" id="btnHistory" onclick="openAccessHistory()" title="Lịch sử truy cập theo tài khoản (admin)" style="display:none">📜</button>
     </div>
 
@@ -4542,10 +4542,15 @@ function parseVNNumber(s) {
   if (s === null || s === undefined) return null;
   s = String(s).trim();
   if (!s) return null;
-  const neg = s.trim().startsWith('-');
-  const digits = s.replace(/[^\d]/g,'');
-  if (!digits) return null;
-  const val = parseInt(digits,10) * (neg?-1:1);
+  const neg = s.startsWith('-');
+  // V46: "1.5" hoặc "1,5" (phần thập phân 1-2 chữ số, chỉ 1 dấu phân cách) → số thập phân; còn lại coi dấu . , khoảng trắng là phân cách hàng nghìn
+  let t = s.replace(/[^\d.,]/g,'');
+  if (!/\d/.test(t)) return null;
+  let val;
+  if (/^\d+[.,]\d{1,2}$/.test(t)) val = Math.round(parseFloat(t.replace(',','.')));
+  else val = parseInt(t.replace(/[.,]/g,''),10);
+  if (!isFinite(val)) return null;
+  val = val * (neg?-1:1);
   return val === 0 ? null : val; // quy ước: 0 = "chưa có giá"
 }
 
@@ -4796,7 +4801,9 @@ async function fetchCSV(gid, preferExport) {
   const gv = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}${bust}`;
   const ex = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}${bust}`;
   // gviz tự đoán kiểu cột nên có thể làm mất ô chữ trong cột số → bảng thông số dùng export (nguyên văn) trước.
-  const urls = preferExport ? [ex, gv] : [gv, ex];
+  // V46: MỌI tab giá đều lấy nguyên văn từng ô (export) trước; gviz chỉ là phương án dự phòng.
+  // Lý do: gviz tự đoán kiểu cột → ô giá nhập dạng chữ (vd "10,500,000") trong cột số bị MẤT → hiện "Liên hệ"/giá cũ.
+  const urls = [ex, gv];
   for (const url of urls) {
     try {
       const res = await fetch(url, {cache:'no-store'});
@@ -5011,10 +5018,23 @@ async function syncAll(manual) {
   let okCount = 0;
   const authOk = await syncAuthFromSheet();
   const techOk = await syncTechSpecsFromSheet();
-  for (let i = 0; i < tabsWithSheet.length; i++) {
-    badge.textContent = `🔄 Đang đồng bộ ${i+1}/${tabsWithSheet.length}: ${tabsWithSheet[i].label}`;
-    const ok = await syncTabFromSheet(tabsWithSheet[i]);
-    if (ok) okCount++;
+  // V46: đồng bộ song song (4 tab/lượt) cho nhanh; tab nào lỗi thì đánh dấu để cảnh báo, KHÔNG im lặng dùng giá cũ
+  const failedTabs = [];
+  let doneCount = 0;
+  const CONC = 4;
+  for (let i = 0; i < tabsWithSheet.length; i += CONC) {
+    const batch = tabsWithSheet.slice(i, i + CONC);
+    await Promise.all(batch.map(async t => {
+      let ok = false;
+      try { ok = await syncTabFromSheet(t); } catch(e) { ok = false; }
+      if (!ok) { // thử lại 1 lần
+        try { ok = await syncTabFromSheet(t); } catch(e) { ok = false; }
+      }
+      t._syncFailed = !ok;
+      if (ok) okCount++; else failedTabs.push(t.label);
+      doneCount++;
+      badge.textContent = `🔄 Đang đồng bộ ${doneCount}/${tabsWithSheet.length}`;
+    }));
     renderTabs();
     renderList();
   }
@@ -5034,7 +5054,9 @@ async function syncAll(manual) {
   const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   if (okCount > 0) {
     const liveInfo = TABS.filter(t=>t._live).map(t=>`${t.label}: ${t._liveCount||0}`).join(' | ');
-    badge.textContent = `✅ ONLINE · ${okCount}/${tabsWithSheet.length} danh mục · ${timeStr}`;
+    badge.textContent = failedTabs.length
+      ? `⚠️ ONLINE ${okCount}/${tabsWithSheet.length} · CHƯA CẬP NHẬT: ${failedTabs.join(', ')} · ${timeStr}`
+      : `✅ ONLINE · ${okCount}/${tabsWithSheet.length} danh mục · ${timeStr}`;
     badge.title = liveInfo + (techOk ? ` | Thông số KT Sheet: ${TECH_SPEC_LIST.length}` : ` | Thông số KT dự phòng: ${TECH_SPEC_LIST.length}`); updateTechSpecStatus(techOk);
     badge.className = 'sync-status live';
   } else {
@@ -5727,8 +5749,18 @@ syncQuoteCartUI();
 if (isLoggedIn) hideGate(); else showGate();
 try { logResumeOnce(); } catch(e) {}
 syncQuoteCompanyUI();
-syncAll();
-setInterval(syncAll, 5 * 60 * 1000); // tự đồng bộ lại mỗi 5 phút
+/* V46: luôn lấy giá mới nhất từ Google Sheet — tự đồng bộ mỗi 2 phút + ngay khi người dùng quay lại tab / bật lại cửa sổ */
+let _syncBusy = false, _lastSyncAt = Date.now();
+async function syncAllSafe(manual) {
+  if (_syncBusy) return;
+  _syncBusy = true;
+  try { await syncAll(manual); } finally { _syncBusy = false; _lastSyncAt = Date.now(); }
+}
+setInterval(() => { if (!document.hidden) syncAllSafe(); }, 2 * 60 * 1000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - _lastSyncAt > 30 * 1000) syncAllSafe(); });
+window.addEventListener('focus', () => { if (Date.now() - _lastSyncAt > 30 * 1000) syncAllSafe(); });
+window.addEventListener('online', () => syncAllSafe());
+syncAllSafe();
 </script>
 </body>
 </html>
