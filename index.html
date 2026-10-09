@@ -970,6 +970,33 @@ tr.veh-row{display:none}
   .tech-accessory-item{line-height:1.2!important}
 }
 
+
+/* ===== TRA THÔNG SỐ XE (đọc 2 sheet THÔNG SỐ XE + THÔNG SỐ XE2) ===== */
+.ts-open-btn{width:100%;margin:0 0 10px;padding:11px 14px;border-radius:10px;border:1px solid #155e57;background:linear-gradient(135deg,#0f766e,#14958a);color:#fff;font:700 14px inherit;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.ts-open-btn:hover{opacity:.92}
+.ts-modal{max-width:900px!important;width:100%}
+.ts-modal .modal-body{padding:14px 16px 18px}
+.ts-input-wrap{position:relative;margin-bottom:8px}
+.ts-input-wrap input{width:100%;padding:12px 38px 12px 14px;font-size:16px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:inherit}
+.ts-input-wrap input:focus{outline:none;border-color:var(--green)}
+.ts-x{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:6px}
+.ts-status{font-size:12px;color:var(--muted);margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ts-status button{background:none;border:1px solid var(--border);color:var(--accent);border-radius:8px;padding:3px 9px;font:600 12px inherit;font-family:inherit;cursor:pointer}
+.ts-sec{margin-bottom:16px}
+.ts-sec-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:700;font-size:13.5px;color:var(--accent);margin-bottom:6px}
+.ts-badge{font-size:11px;font-weight:700;border-radius:20px;padding:2px 9px;background:var(--surface3);color:#fff}
+.ts-badge.ok{background:#0f766e}
+.ts-badge.no{background:#64748b}
+.ts-both{margin-bottom:10px;padding:7px 10px;border-radius:8px;background:rgba(15,118,110,.14);border:1px solid #0f766e;font-size:12.5px;color:var(--text)}
+.ts-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:10px}
+.ts-tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
+.ts-tbl th{background:var(--surface3);color:#fff;text-align:center;padding:7px 8px;font-size:12px;white-space:nowrap;position:sticky;top:0}
+.ts-tbl td{padding:6px 8px;border-top:1px solid var(--border);text-align:center;color:var(--text)}
+.ts-tbl td.l,.ts-tbl th.l{text-align:left}
+.ts-tbl td.m{font-weight:700;text-align:left;white-space:nowrap}
+.ts-tbl tr:nth-child(even) td{background:rgba(127,127,127,.07)}
+.ts-empty{padding:14px;text-align:center;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:10px}
+.ts-more{font-size:11.5px;color:var(--muted);margin-top:4px}
 </style>
 
 <style>
@@ -1524,6 +1551,9 @@ table.excel-table td.nm{font-weight:600}
       <button type="button" class="veh-clear" id="vehClear" onclick="vehClear()" aria-label="Xóa tìm theo xe">✕</button>
       <div class="veh-dd" id="vehDD"></div>
     </div>
+
+    <!-- Tra thông số xe (2 sheet THÔNG SỐ XE + THÔNG SỐ XE2) -->
+    <button type="button" class="ts-open-btn" id="tsOpenBtn" onclick="tsOpen()">📐 Tra thông số xe (ắc · tai · tâm ắc)</button>
 
     <!-- 4 nút gom 1 hàng -->
     <div class="action-row">
@@ -5761,6 +5791,196 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && Da
 window.addEventListener('focus', () => { if (Date.now() - _lastSyncAt > 30 * 1000) syncAllSafe(); });
 window.addEventListener('online', () => syncAllSafe());
 syncAllSafe();
+</script>
+
+<!-- MODAL TRA THÔNG SỐ XE -->
+<div class="modal-bg" id="tsBg" onclick="if(event.target===this)tsClose()">
+  <div class="modal ts-modal" role="dialog" aria-label="Tra thông số xe">
+    <div class="modal-head"><h2>📐 Tra thông số xe</h2><button class="close" onclick="tsClose()" aria-label="Đóng">✕</button></div>
+    <div class="modal-body">
+      <div class="ts-input-wrap">
+        <input type="text" id="tsInput" placeholder="Nhập tên xe: PC200, ZX210, SK350, EX30, PC200-8…" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+        <button class="ts-x" type="button" onclick="tsClear()" aria-label="Xóa">✕</button>
+      </div>
+      <div class="ts-status" id="tsStatus">Đang chuẩn bị…</div>
+      <div id="tsResults"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== TRA THÔNG SỐ XE =====
+   Đọc 2 tab trong Google Sheet DATA GIÁ BÁN:
+   - THÔNG SỐ XE  (gid 1449729978): HÃNG XE | MODEL | TRỌNG LƯỢNG | DÒNG XE | PIN A | PIN B | RỘNG TAI | TÂM ẮC
+   - THÔNG SỐ XE2 (gid 835656529) : bảng ATB (EX MODE | PIN DIM | LINK PIN | LENGTH | PIN TO PIN | cấp | ghi chú) chia theo hãng
+   Gõ tên xe → tìm ở CẢ 2 sheet; sheet nào có thì hiện, có cả 2 thì hiện cả 2. */
+var TS_GID1 = 1449729978, TS_GID2 = 835656529;
+var TS = {s1: null, s2: null, loading: false, loadedAt: null, err: false};
+var TS_LIMIT = 60;
+
+function tsEsc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function tsCell(s){ return String(s == null ? '' : s).replace(/\r/g,'').replace(/\s*\n\s*/g,' ').trim(); }
+function tsKey(s){ // bỏ dấu, chữ thường, chỉ giữ chữ + số + dấu chấm  ("PC 200" = "pc-200" = "pc200")
+  return stripDiacritics(String(s||'')).toLowerCase().replace(/caterpillar/g,'cat').replace(/[^a-z0-9.]/g,'');
+}
+
+/* ---- Sheet 1: THÔNG SỐ XE ---- */
+function tsParse1(rows){
+  var hi = -1;
+  for (var i=0;i<Math.min(rows.length,15);i++){
+    var n = rows[i].map(normHeader);
+    if (n.indexOf('model') !== -1 && n.indexOf('hang xe') !== -1){ hi = i; break; }
+  }
+  if (hi < 0) hi = 0;
+  var cols = [], labels = [];
+  rows[hi].forEach(function(h,c){ var t = tsCell(h); if (t){ cols.push(c); labels.push(t); } });
+  var out = [];
+  for (var r=hi+1;r<rows.length;r++){
+    var cells = cols.map(function(c){ return tsCell(rows[r][c]); });
+    if (!cells.some(Boolean)) continue;
+    var hay = [cells[0], cells[1], /[a-z]/i.test(cells[2]||'') ? cells[2] : ''].join(' ');
+    out.push({cells: cells, key: tsKey(hay), model: tsKey(cells[1]), brand: tsKey(cells[0])});
+  }
+  return {labels: labels, rows: out};
+}
+
+/* ---- Sheet 2: THÔNG SỐ XE2 (2 khối cạnh nhau: khối trái tiêu đề Trung/Anh, khối phải ATB theo hãng) ---- */
+function tsParse2(rows){
+  var blocks = {}, out = [], seen = {};
+  var W = 7;
+  rows.forEach(function(row){
+    var hdrCols = [];
+    for (var c=0;c<row.length;c++){
+      var t = tsCell(row[c]);
+      if (t && /^(ex\s*mode|excavator)/i.test(t) || (t && /excavator\s*mo/i.test(t))) hdrCols.push(c);
+    }
+    hdrCols.forEach(function(c){ blocks[c] = {brand: (blocks[c] && blocks[c].brand) || ''}; });
+    Object.keys(blocks).forEach(function(k){
+      var c = +k;
+      if (hdrCols.indexOf(c) !== -1) return;
+      var cells = [];
+      for (var j=0;j<W;j++) cells.push(tsCell(row[c+j]));
+      var filled = cells.filter(Boolean).length;
+      if (!filled) return;
+      if (filled === 1){
+        var firstCol = !!cells[0];
+        if (!firstCol || !/\d/.test(cells[0])){ // dòng nhãn hãng (Hitach / Kobelco / 日立挖机 Hitachi…)
+          var txt = cells.filter(Boolean)[0];
+          var lat = txt.split(/\s+/).filter(function(w){ return /[A-Za-z]/.test(w); }).join(' ');
+          blocks[k].brand = lat || txt;
+          return;
+        }
+        return; // mã xe không có số liệu
+      }
+      if (!cells[0]) return;
+      var sig = tsKey(cells.slice(0,5).join('|'));
+      var rec = {brand: blocks[k].brand, cells: cells, key: tsKey((blocks[k].brand||'') + ' ' + cells[0]), model: tsKey(cells[0]), brand_k: tsKey(blocks[k].brand)};
+      if (seen[sig]){ if (!seen[sig].brand && rec.brand){ seen[sig].brand = rec.brand; seen[sig].key = rec.key; seen[sig].brand_k = rec.brand_k; } return; }
+      seen[sig] = rec; out.push(rec);
+    });
+  });
+  return {rows: out};
+}
+
+function tsFilter(list, q){
+  var joined = tsKey(q);
+  if (!joined) return [];
+  var toks = String(q).toLowerCase().split(/\s+/).map(tsKey).filter(Boolean);
+  var res = [];
+  list.forEach(function(r){
+    var hit = r.key.indexOf(joined) !== -1;
+    if (!hit && toks.length > 1) hit = toks.every(function(t){ return r.key.indexOf(t) !== -1; });
+    if (!hit) return;
+    var rank = (r.model === joined) ? 0 : (r.model.indexOf(joined) === 0 ? 1 : (r.model.indexOf(joined) !== -1 ? 2 : 3));
+    res.push({r: r, rank: rank, i: res.length});
+  });
+  res.sort(function(a,b){ return a.rank - b.rank || a.i - b.i; });
+  return res.map(function(x){ return x.r; });
+}
+
+async function tsLoad(force){
+  if (TS.loading) return;
+  if (!force && TS.s1 && TS.s2) return;
+  TS.loading = true; TS.err = false; tsStatus();
+  try {
+    var got = await Promise.all([fetchCSV(TS_GID1, true), fetchCSV(TS_GID2, true)]);
+    if (got[0]) TS.s1 = tsParse1(parseCSV(got[0]));
+    if (got[1]) TS.s2 = tsParse2(parseCSV(got[1]));
+    TS.err = !(got[0] && got[1]);
+    if (got[0] || got[1]) TS.loadedAt = new Date();
+  } catch(e){ TS.err = true; }
+  TS.loading = false;
+  tsStatus(); tsRender();
+}
+
+function tsStatus(){
+  var el = document.getElementById('tsStatus'); if (!el) return;
+  var h = '';
+  if (TS.loading) h = '🔄 Đang đọc 2 sheet THÔNG SỐ XE…';
+  else if (!TS.s1 && !TS.s2) h = '⚠ Chưa đọc được sheet (kiểm tra mạng / quyền chia sẻ).';
+  else {
+    var t = TS.loadedAt ? String(TS.loadedAt.getHours()).padStart(2,'0') + ':' + String(TS.loadedAt.getMinutes()).padStart(2,'0') : '';
+    h = '✅ ' + (TS.s1 ? TS.s1.rows.length : 0) + ' xe (THÔNG SỐ XE) · ' + (TS.s2 ? TS.s2.rows.length : 0) + ' xe (THÔNG SỐ XE2)' + (t ? ' · ' + t : '');
+    if (TS.err) h += ' · ⚠ 1 sheet chưa đọc được';
+  }
+  el.innerHTML = '<span>' + h + '</span><button type="button" onclick="tsLoad(true)">↻ Cập nhật</button>';
+}
+
+var TS2_LABELS = ['Dòng xe','Ắc (Pin) mm','Ắc tai nối (Link) mm','Rộng tai / Dipper mm','Tâm ắc mm','Cấp','Ghi chú'];
+
+function tsTable1(list){
+  var L = TS.s1.labels;
+  var shown = list.slice(0, TS_LIMIT);
+  var h = '<div class="ts-scroll"><table class="ts-tbl"><thead><tr>' + L.map(function(l,i){ return '<th class="' + (i<2?'l':'') + '">' + tsEsc(l) + '</th>'; }).join('') + '</tr></thead><tbody>';
+  shown.forEach(function(r){
+    h += '<tr>' + r.cells.map(function(c,i){ return '<td class="' + (i===1?'m':(i===0?'l':'')) + '">' + tsEsc(c) + '</td>'; }).join('') + '</tr>';
+  });
+  h += '</tbody></table></div>';
+  if (list.length > TS_LIMIT) h += '<div class="ts-more">Hiện ' + TS_LIMIT + '/' + list.length + ' kết quả — gõ thêm để lọc rõ hơn.</div>';
+  return h;
+}
+function tsTable2(list){
+  var shown = list.slice(0, TS_LIMIT);
+  var h = '<div class="ts-scroll"><table class="ts-tbl"><thead><tr><th class="l">Hãng</th>' + TS2_LABELS.map(function(l,i){ return '<th class="' + (i===0?'l':'') + '">' + tsEsc(l) + '</th>'; }).join('') + '</tr></thead><tbody>';
+  shown.forEach(function(r){
+    h += '<tr><td class="l">' + tsEsc(r.brand) + '</td>' + r.cells.map(function(c,i){ return '<td class="' + (i===0?'m':'') + '">' + tsEsc(c) + '</td>'; }).join('') + '</tr>';
+  });
+  h += '</tbody></table></div>';
+  if (list.length > TS_LIMIT) h += '<div class="ts-more">Hiện ' + TS_LIMIT + '/' + list.length + ' kết quả — gõ thêm để lọc rõ hơn.</div>';
+  return h;
+}
+
+function tsRender(){
+  var box = document.getElementById('tsResults'); if (!box) return;
+  var q = document.getElementById('tsInput').value.trim();
+  if (!q){ box.innerHTML = '<div class="ts-empty">Nhập tên xe để tra (vd: <b>PC200</b>, <b>ZX210</b>, <b>EX30</b>, <b>SK350</b>). Hệ thống tự tìm ở cả 2 sheet THÔNG SỐ XE và THÔNG SỐ XE2.</div>'; return; }
+  if (!TS.s1 && !TS.s2){ box.innerHTML = '<div class="ts-empty">' + (TS.loading ? '🔄 Đang tải dữ liệu…' : '⚠ Chưa có dữ liệu — bấm ↻ Cập nhật.') + '</div>'; return; }
+  var a = TS.s1 ? tsFilter(TS.s1.rows, q) : [];
+  var b = TS.s2 ? tsFilter(TS.s2.rows, q) : [];
+  var h = '';
+  if (a.length && b.length) h += '<div class="ts-both">✅ Xe này có ở <b>cả 2 sheet</b> — hiện đủ 2 bảng bên dưới để đối chiếu.</div>';
+  h += '<div class="ts-sec"><div class="ts-sec-h">📋 THÔNG SỐ XE <span class="ts-badge ' + (a.length?'ok':'no') + '">' + (a.length ? a.length + ' kết quả' : 'không có') + '</span></div>' +
+       (a.length ? tsTable1(a) : '<div class="ts-empty">Sheet THÔNG SỐ XE không có “' + tsEsc(q) + '”.</div>') + '</div>';
+  h += '<div class="ts-sec"><div class="ts-sec-h">📋 THÔNG SỐ XE2 <span class="ts-badge ' + (b.length?'ok':'no') + '">' + (b.length ? b.length + ' kết quả' : 'không có') + '</span></div>' +
+       (b.length ? tsTable2(b) : '<div class="ts-empty">Sheet THÔNG SỐ XE2 không có “' + tsEsc(q) + '”.</div>') + '</div>';
+  box.innerHTML = h;
+}
+
+var _tsT = null;
+function tsOpen(){
+  var bg = document.getElementById('tsBg'); bg.classList.add('open');
+  var inp = document.getElementById('tsInput');
+  var v = document.getElementById('vehInput'); // mượn chữ đang gõ ở ô tìm theo tên xe (nếu có)
+  if (!inp.value && v && v.value) inp.value = v.value;
+  tsStatus(); tsRender(); tsLoad(false);
+  setTimeout(function(){ try{ inp.focus(); inp.select(); }catch(e){} }, 60);
+}
+function tsClose(){ document.getElementById('tsBg').classList.remove('open'); }
+function tsClear(){ var i = document.getElementById('tsInput'); i.value = ''; tsRender(); i.focus(); }
+document.getElementById('tsInput').addEventListener('input', function(){ clearTimeout(_tsT); _tsT = setTimeout(tsRender, 120); });
+document.getElementById('tsInput').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ clearTimeout(_tsT); tsRender(); this.blur(); } });
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && document.getElementById('tsBg').classList.contains('open')) tsClose(); });
+setTimeout(function(){ try{ tsLoad(false); }catch(e){} }, 4000); // tải sẵn nền để mở lên là có ngay
 </script>
 </body>
 </html>
