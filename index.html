@@ -13,7 +13,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#ffffff" id="metaTheme">
 <script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("vb_theme")||"light")}catch(e){document.documentElement.setAttribute("data-theme","light")}</script>
-<title>VIETBACBAOGIA-V45 PRO</title>
+<title>VIETBACBAOGIA</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -1505,6 +1505,22 @@ table.excel-table td.nm{font-weight:600}
 })();
 </script>
 
+<style id="vb-v47">
+/* V47: tiêu đề gọn — chỉ còn logo + tên + nút */
+.topbar-title,
+.topbar-title.tb-x{grid-template-areas:"logo title btn" !important;margin-bottom:8px}
+.topbar-title .btn-admin{grid-area:auto;margin-left:0}
+.tb-actions{grid-area:btn;display:flex;align-items:center;gap:6px;justify-self:end}
+.vb-hidden-stats{display:none !important}
+.sync-row{display:none}
+.sync-row.show{display:flex}
+.sync-status{transition:opacity .2s}
+.sync-refresh.spin{animation:vbspin .9s linear infinite;color:var(--accent);border-color:var(--accent2)}
+@keyframes vbspin{to{transform:rotate(360deg)}}
+@media(max-width:600px){
+  .topbar-title{grid-template-areas:"logo title btn" !important}
+}
+</style>
 </head>
 <body>
 
@@ -1515,28 +1531,26 @@ table.excel-table td.nm{font-weight:600}
   <div class="topbar-title">
     <span class="logo">🔨</span>
     <div>
-      <h1>VIETBACBAOGIA-V45 PRO</h1>
-      <div class="calendar-pro" id="calendarPro">📅 Đang cập nhật lịch...</div>
-      <div class="sub" id="topSub">Búa · Đầm · Kìm · Phụ Tùng · Dịch Vụ</div>
-      <div class="ctr-bar">
-        <span><span class="ctr-dot"></span><span id="cOnline">1</span> online</span>
-        <span>👁 <span id="cDay">—</span> hôm nay</span>
-        <span>📅 <span id="cMonth">—</span> tháng</span>
-        <span>📊 <span id="cTotal">—</span> tổng</span>
+      <h1>VIETBACBAOGIA</h1>
+      <!-- Các phần tử dưới đây không hiển thị nữa; giữ trong DOM (ẩn) để các script thống kê/đếm không bị lỗi -->
+      <div class="vb-hidden-stats" aria-hidden="true">
+        <div class="calendar-pro" id="calendarPro"></div>
+        <div class="sub" id="topSub"></div>
+        <span id="cOnline">1</span><span id="cDay">—</span><span id="cMonth">—</span><span id="cTotal">—</span>
       </div>
     </div>
-    <button class="btn-admin" onclick="confirmLogout()">👤 Chưa đăng nhập</button>
+    <div class="tb-actions">
+      <button class="sync-refresh sync-hist" id="btnHistory" onclick="openAccessHistory()" title="Lịch sử truy cập theo tài khoản (admin)" style="display:none">📜</button>
+      <button class="sync-refresh" id="btnRefresh" onclick="syncAllSafe(true)" title="Làm mới dữ liệu">↻</button>
+      <button class="btn-admin" onclick="confirmLogout()">👤 Chưa đăng nhập</button>
+    </div>
   </div>
 
   <!-- COLLAPSIBLE BODY -->
   <div class="topbar-body" id="topbarBody">
 
-    <!-- Sync -->
-    <div class="sync-row">
-      <span class="sync-status syncing" id="syncStatus">🔄 Đang đồng bộ dữ liệu…</span>
-      <button class="sync-refresh" onclick="syncAllSafe(true)" title="Làm mới dữ liệu">↻</button>
-      <button class="sync-refresh sync-hist" id="btnHistory" onclick="openAccessHistory()" title="Lịch sử truy cập theo tài khoản (admin)" style="display:none">📜</button>
-    </div>
+    <!-- Trạng thái đồng bộ: chỉ hiện khi có sự cố hoặc khi bấm ↻ -->
+    <div class="sync-row" id="syncRow"><span class="sync-status" id="syncStatus"></span></div>
 
     <!-- Search -->
     <div class="search-wrap">
@@ -2151,7 +2165,7 @@ const TABS = [
     cột đó trong sheet gốc luôn là "Giá bán đã bao gồm hỗ trợ lắp". */
  baiXeGid:1693090022, lpDefaultNote:'Giá bán đã bao gồm hỗ trợ lắp',
  priceFields:[{key:'le',label:'Giá bán lẻ'},{key:'g1',label:'Giá I'},{key:'g2',label:'Giá II'},{key:'lp',label:'Lắp tại bãi'}],
- fieldOrder:[{key:'ac',label:'Ắc lắp',cls:'ac'},{key:'dk',label:'ĐK mũi',cls:'dk'}],
+ fieldOrder:[{key:'ac',label:'Ắc lắp',cls:'ac'},{key:'dk',label:'ĐK mũi',cls:'dk'},{key:'kt',label:'Kích thước',cls:'kt'}],
  groups:[
   {cat:'Búa Hàn Quốc (Neobuzz)', items:[
     {n:'Neobuzz NB370',          ac:null,    xe:['300-350'],dk:'165',le:420000000,g1:375000000,g2:360000000,lp:375000000},
@@ -4721,6 +4735,9 @@ function parseSheetRows(rows, tab) {
 
   const priceKeys = tab.priceFields.map(f => f.key);
   const extraKeys = (tab.fieldOrder||[]).map(f => f.key);
+  // FIX: cột STT — dòng tiêu đề nhóm KHÔNG có STT, dòng sản phẩm luôn có STT (số).
+  // Nhờ vậy sản phẩm chưa có giá (vd "Thân búa rung cừ S600") không bị nhầm thành tiêu đề nhóm rồi biến mất.
+  const sttIdx = rows[headerRow].map(normHeader).findIndex(h => h === 'stt');
   const groups = [];
   let current = null;
 
@@ -4748,7 +4765,8 @@ function parseSheetRows(rows, tab) {
                  || (idx.ma !== undefined && String(row[idx.ma] || '').trim())
                  || (idx.hx !== undefined && String(row[idx.hx] || '').trim())
                  || (idx.dx !== undefined && String(row[idx.dx] || '').trim());
-    const looksProduct = hasSpec || (typeof tab.isProduct === 'function' && tab.isProduct(name));
+    const hasStt = sttIdx !== -1 && /^\d+$/.test(String(row[sttIdx] || '').trim());
+    const looksProduct = hasStt || hasSpec || (typeof tab.isProduct === 'function' && tab.isProduct(name));
     if (pricesEmpty && !infoTab && !looksProduct) {
       current = {cat: name, items: []};
       groups.push(current);
@@ -4885,20 +4903,20 @@ async function syncBaiXeFromSheet(gid) {
 }
 
 // Gắn giá + ghi chú "Lắp tại bãi" vào đúng sản phẩm (so tên) ở mọi tab có khai báo baiXeGid
-function applyBaiXeToTabs() {
+function applyBaiXeToGroups(groups) {
   if (!Object.keys(BAIXE_MAP).length) return;
-  for (const tab of TABS) {
-    if (!tab.baiXeGid) continue;
-    for (const g of (tab.groups || [])) {
-      for (const it of g.items) {
-        const hit = BAIXE_MAP[norm(it.n)];
-        if (hit) {
-          if (hit.price !== null && hit.price !== undefined) it.lp = hit.price;
-          if (hit.note) it.lpNote = hit.note;
-        }
+  for (const g of (groups || [])) {
+    for (const it of g.items) {
+      const hit = BAIXE_MAP[norm(it.n)];
+      if (hit) {
+        if (hit.price !== null && hit.price !== undefined) it.lp = hit.price;
+        if (hit.note) it.lpNote = hit.note;
       }
     }
   }
+}
+function applyBaiXeToTabs() {
+  for (const tab of TABS) { if (tab.baiXeGid) applyBaiXeToGroups(tab.groups); }
 }
 
 /* ===== PHÂN LOẠI NHÓM TAB BÚA (V23) =====
@@ -4969,7 +4987,27 @@ function fixTabGroups(tab) {
   tab.groups = out;
 }
 
-async function syncTabFromSheet(tab) {
+/* V47: tải + phân tích dữ liệu 1 tab thành BẢN NHÁP, không sửa tab.groups/tab.table nên giao diện không bị động chạm.
+   Trả về null nếu lỗi; {same:true} nếu nội dung sheet không đổi từ lần trước (bỏ qua phân tích). */
+async function fetchTabDraft(tab) {
+  if (!tab.sheetGid) return null;
+  const csv = await fetchCSV(tab.sheetGid);
+  if (!csv) return null;
+  if (tab._lastCsv === csv && tab._sig) return {same:true};
+  if (tab.tableMode) {
+    const T = buildSheetTable(tab, parseCSV(csv));
+    if (!T) return null;
+    return {csv, table:T, count:T.rows.filter(r => !r.sec).length};
+  }
+  const groups = parseSheetRows(parseCSV(csv), tab);
+  if (!groups || !groups.length) return null;
+  const prev = tab.groups;            // fixTabGroups làm việc trên tab.groups → hoán đổi tạm (đồng bộ, không có await xen giữa)
+  tab.groups = groups;
+  try { fixTabGroups(tab); } finally { var fixed = tab.groups; tab.groups = prev; }
+  return {csv, groups:fixed, count:fixed.reduce((a,g)=>a+g.items.length,0)};
+}
+
+async function syncTabFromSheet(tab) {   // (giữ lại cho tương thích — đồng bộ trực tiếp)
   if (!tab.sheetGid) return false;
   if (tab.tableMode) return syncSheetTableTab(tab);   // V37
   const csv = await fetchCSV(tab.sheetGid);
@@ -5045,60 +5083,128 @@ async function syncAuthFromSheet() {
   return true;
 }
 
-async function syncAll(manual) {
+/* ===== V47: ĐỒNG BỘ ÂM THẦM =====
+   - Tải & phân tích ở nền thành bản nháp; KHÔNG vẽ lại giữa chừng.
+   - Chỉ khi dữ liệu thật sự khác (giá / tên / ghi chú…) mới thay vào và vẽ lại 1 lần, giữ nguyên vị trí cuộn.
+   - Không đổi gì → không động tới giao diện (không giật, không nháy).
+   - Bộ nhớ đệm: lần mở sau hiện ngay dữ liệu lần trước, không còn cảnh "nhảy" từ dữ liệu mặc định sang dữ liệu Sheet. */
+const SHEET_CACHE_KEY = 'vb_sheet_cache_v47';
+function _sigOf(x) { try { return JSON.stringify(x); } catch(e) { return String(Math.random()); } }
+function saveSheetCache() {
+  try {
+    const out = {};
+    for (const t of TABS) {
+      if (!t._live) continue;
+      out[t.id] = t.tableMode ? {table: t.table, count: t._liveCount} : {groups: t.groups, count: t._liveCount};
+    }
+    localStorage.setItem(SHEET_CACHE_KEY, JSON.stringify(out));
+  } catch(e) { /* hết dung lượng / bị chặn → bỏ qua */ }
+}
+function loadSheetCache() {
+  try {
+    const raw = localStorage.getItem(SHEET_CACHE_KEY);
+    if (!raw) return;
+    const c = JSON.parse(raw);
+    for (const t of TABS) {
+      const d = c[t.id];
+      if (!d) continue;
+      if (t.tableMode && d.table) { t.table = d.table; t.groups = []; }
+      else if (!t.tableMode && Array.isArray(d.groups) && d.groups.length) { t.groups = d.groups; }
+      else continue;
+      t._sig = _sigOf(t.tableMode ? t.table : t.groups);
+      t._live = true; t._liveCount = d.count || 0;
+    }
+  } catch(e) {}
+}
+function _setSyncBadge(text, cls, autoHideMs) {
   const badge = document.getElementById('syncStatus');
-  badge.textContent = '🔄 Đang đồng bộ dữ liệu…';
-  badge.className = 'sync-status syncing';
+  const row = document.getElementById('syncRow');
+  if (!badge) return;
+  if (!text) { if (row) row.classList.remove('show'); badge.textContent = ''; return; }
+  badge.textContent = text; badge.className = 'sync-status ' + (cls || '');
+  if (row) row.classList.add('show');
+  clearTimeout(_setSyncBadge._t);
+  if (autoHideMs) _setSyncBadge._t = setTimeout(() => row && row.classList.remove('show'), autoHideMs);
+}
+const _yieldUI = () => new Promise(r => setTimeout(r, 0));
 
+async function syncAll(manual) {
+  const refreshBtn = document.getElementById('btnRefresh');
+  if (refreshBtn) refreshBtn.classList.add('spin');
+  try {
   const tabsWithSheet = TABS.filter(t => t.sheetGid);
   let okCount = 0;
   const authOk = await syncAuthFromSheet();
   const techOk = await syncTechSpecsFromSheet();
-  // V46: đồng bộ song song (4 tab/lượt) cho nhanh; tab nào lỗi thì đánh dấu để cảnh báo, KHÔNG im lặng dùng giá cũ
   const failedTabs = [];
-  let doneCount = 0;
+  const drafts = new Map();
   const CONC = 4;
   for (let i = 0; i < tabsWithSheet.length; i += CONC) {
     const batch = tabsWithSheet.slice(i, i + CONC);
     await Promise.all(batch.map(async t => {
-      let ok = false;
-      try { ok = await syncTabFromSheet(t); } catch(e) { ok = false; }
-      if (!ok) { // thử lại 1 lần
-        try { ok = await syncTabFromSheet(t); } catch(e) { ok = false; }
-      }
-      t._syncFailed = !ok;
-      if (ok) okCount++; else failedTabs.push(t.label);
-      doneCount++;
-      badge.textContent = `🔄 Đang đồng bộ ${doneCount}/${tabsWithSheet.length}`;
+      let d = null;
+      try { d = await fetchTabDraft(t); } catch(e) { d = null; }
+      if (!d) { try { d = await fetchTabDraft(t); } catch(e) { d = null; } }   // thử lại 1 lần
+      t._syncFailed = !d;
+      if (d) { okCount++; drafts.set(t, d); } else failedTabs.push(t.label);
     }));
-    renderTabs();
-    renderList();
+    await _yieldUI();   // nhường luồng cho thao tác của người dùng giữa các lượt
   }
 
-  // Đối chiếu giá "Lắp tại bãi" theo tên hàng với sheet "LẮP ĐẶT BÃI XE" (áp dụng cho
-  // mọi tab có khai báo baiXeGid, vd Búa+Đầm+Kìm), rồi build lại FLAT để tìm kiếm
-  // toàn danh mục luôn dùng đúng dữ liệu mới nhất chứ không phải dữ liệu đóng gói sẵn.
+  // Sheet "LẮP ĐẶT BÃI XE" → áp vào bản nháp (không phải vào dữ liệu đang hiển thị)
   const baiXeGids = [...new Set(TABS.filter(t => t.baiXeGid).map(t => t.baiXeGid))];
   for (const gid of baiXeGids) { try { await syncBaiXeFromSheet(gid); } catch(e){} }
-  applyBaiXeToTabs();
-  FLAT = buildFlat();
 
-  renderTabs();
-  renderList();
+  // So sánh bản nháp với dữ liệu đang hiển thị: chỉ tab nào THỰC SỰ đổi mới được thay
+  const changed = [];
+  const countsBefore = new Map(TABS.map(t => [t.id, itemTotalCount(t)]));
+  for (const [t, d] of drafts) {
+    t._syncTime = new Date();
+    if (d.same) { t._live = true; continue; }
+    if (d.groups && t.baiXeGid) applyBaiXeToGroups(d.groups);
+    const sig = _sigOf(d.table || d.groups);
+    t._lastCsv = d.csv;
+    t._live = true; t._liveCount = d.count;
+    if (sig === t._sig) continue;        // dữ liệu hiển thị đã giống hệt → không làm gì
+    t._pending = d; t._pendingSig = sig;
+    changed.push(t);
+  }
+
+  if (changed.length) {
+    await _yieldUI();
+    const y = window.scrollY;
+    const tabStrip = document.getElementById('tabScroll');
+    const sx = tabStrip ? tabStrip.scrollLeft : 0;
+    for (const t of changed) {
+      if (t._pending.table) { t.table = t._pending.table; t.groups = []; }
+      else t.groups = t._pending.groups;
+      t._sig = t._pendingSig; t._pending = null; t._pendingSig = null;
+    }
+    FLAT = buildFlat();
+    const countsChanged = TABS.some(t => countsBefore.get(t.id) !== itemTotalCount(t));
+    const activeChanged = changed.some(t => t.id === activeTab) || (typeof searchScopeAll !== 'undefined' && searchScopeAll && searchQuery);
+    if (countsChanged) { renderTabs(); if (tabStrip) tabStrip.scrollLeft = sx; }
+    if (activeChanged) {
+      renderList();
+      window.scrollTo({top: y, behavior: 'instant'});
+    }
+    saveSheetCache();
+  } else {
+    // lần đầu chưa có _sig (chưa có cache) nhưng dữ liệu y hệt cũng không cần vẽ lại
+    if (drafts.size && !localStorage.getItem(SHEET_CACHE_KEY)) saveSheetCache();
+  }
 
   const now = new Date();
   const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-  if (okCount > 0) {
-    const liveInfo = TABS.filter(t=>t._live).map(t=>`${t.label}: ${t._liveCount||0}`).join(' | ');
-    badge.textContent = failedTabs.length
-      ? `⚠️ ONLINE ${okCount}/${tabsWithSheet.length} · CHƯA CẬP NHẬT: ${failedTabs.join(', ')} · ${timeStr}`
-      : `✅ ONLINE · ${okCount}/${tabsWithSheet.length} danh mục · ${timeStr}`;
-    badge.title = liveInfo + (techOk ? ` | Thông số KT Sheet: ${TECH_SPEC_LIST.length}` : ` | Thông số KT dự phòng: ${TECH_SPEC_LIST.length}`); updateTechSpecStatus(techOk);
-    badge.className = 'sync-status live';
-  } else {
-    badge.textContent = `📦 Không kết nối được Sheet — đang dùng dữ liệu mặc định`;
-    badge.className = 'sync-status offline';
-  }
+  const liveInfo = TABS.filter(t=>t._live).map(t=>`${t.label}: ${t._liveCount||0}`).join(' | ');
+  const badge = document.getElementById('syncStatus');
+  if (badge) badge.title = liveInfo + (techOk ? ` | Thông số KT Sheet: ${TECH_SPEC_LIST.length}` : ` | Thông số KT dự phòng: ${TECH_SPEC_LIST.length}`);
+  updateTechSpecStatus(techOk);
+  // Chỉ báo khi có vấn đề (hoặc khi người dùng tự bấm ↻); bình thường im lặng hoàn toàn
+  if (okCount === 0) _setSyncBadge('📦 Không kết nối được Sheet — đang dùng dữ liệu đã lưu', 'offline', 0);
+  else if (failedTabs.length) _setSyncBadge(`⚠️ Chưa cập nhật: ${failedTabs.join(', ')}`, 'offline', 8000);
+  else if (manual) _setSyncBadge(changed.length ? `✅ Đã cập nhật ${changed.length} danh mục · ${timeStr}` : `✅ Dữ liệu đã mới nhất · ${timeStr}`, 'live', 2500);
+  else _setSyncBadge('');
 
   // Nếu đang đăng nhập, kiểm tra lại quyền truy cập còn hợp lệ không sau khi có danh sách mới
   if (authOk && isLoggedIn && currentUser) {
@@ -5116,7 +5222,9 @@ async function syncAll(manual) {
       populateQuoteUserPhone(false);
     }
   }
-  if (manual) setTimeout(()=>{ if(!isLoggedIn) return; }, 0);
+  } finally {
+    if (refreshBtn) refreshBtn.classList.remove('spin');
+  }
 }
 
 /* ===== LỊCH SỬ XUẤT PDF (thay cho Yêu Thích) ===== */
@@ -5773,6 +5881,7 @@ document.getElementById('viewCardBtn').classList.toggle('active', viewMode==='ca
 document.getElementById('viewTableBtn').classList.toggle('active', viewMode==='table');
 document.body.classList.toggle('tbl-mode', viewMode==='table');
 TABS.forEach(fixTabGroups);
+loadSheetCache();   // V47: hiện ngay dữ liệu Sheet lần trước, tránh nhảy giao diện khi đồng bộ xong
 const _rt23 = window.renderTabs;
 window.renderTabs = function() { _rt23(); enhanceTables(); };
 FLAT = buildFlat();
