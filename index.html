@@ -2223,7 +2223,8 @@ const TABS = [
     {n:'Kìm VB50 / ARS04',       ac:null,xe:['30-50'], dk:null,           le:31000000,  g1:26000000, g2:25000000, lp:null},
     {n:'Kìm VB75 / ARS05',       ac:null,xe:['50-75'], dk:null,           le:31000000,  g1:26000000, g2:25000000, lp:null},
     {n:'Kìm VB120',               ac:null,xe:['100-140'],dk:'826 kg',     le:65000000,  g1:57000000, g2:54000000, lp:null},
-    {n:'Kìm ARS06',               ac:null,xe:['100-140'],dk:null,         le:55000000,  g1:47000000, g2:44000000, lp:null},
+    {n:'Kìm ARS06',               ac:null,xe:['100-140'],dk:null,         le:55000000,  g1:45000000, g2:42000000, lp:null},
+    {n:'Kìm VB120 có ngăn kéo',  ac:null,xe:['100-140'],dk:null,         le:null,      g1:null,     g2:null,     lp:null},
     {n:'Kìm VB200 có ngăn kéo',  ac:null,xe:['200'],   dk:'1538 kg',     le:110000000, g1:93000000, g2:89000000, lp:null},
   ]},
   {cat:'Ghắp Gỗ 1 Ty', items:[
@@ -4939,8 +4940,13 @@ function fixTabGroups(tab) {
   const rest = [];
   for (const g of tab.groups) {
     const keep = [];
+    // FIX: chỉ phân lại hãng cho các nhóm BÚA (hoặc nhóm mặc định mang tên tab).
+    // Trước đây mọi nhóm đều bị quét → kìm "VB50/ARS04", "VB75/ARS05", "VB120", "VB200 có ngăn kéo"
+    // bị nhầm là búa VB và hút sang nhóm Búa Trung Quốc (VB) → nhóm Kìm chỉ còn ARS06.
+    const gnc = norm(g.cat);
+    const isBuaGroup = gnc.startsWith('bua') || gnc === norm(tab.label);
     for (const it of g.items) {
-      const b = buaBrandOf(it.n);
+      const b = isBuaGroup ? buaBrandOf(it.n) : null;
       if (b) { bucket[b].push(it); if (g.note && !bucketNote[b]) bucketNote[b] = g.note; }
       else keep.push(it);
     }
