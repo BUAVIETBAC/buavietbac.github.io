@@ -6097,35 +6097,60 @@ setTimeout(function(){ try{ tsLoad(false); }catch(e){} }, 4000); // tải sẵn 
 </script>
 
 
-<!-- ===== GIAO DIEN PRO + BOT GIA NOI BO (lop phu, khong sua logic goc) ===== -->
+
+<!-- ===== GIAO DIEN PRO V2 + BOT GIA (lop phu, khong sua logic goc) ===== -->
 <style>
 @media screen {
-  :root { --vb-sh: 0 2px 10px rgba(11,42,91,.06); --vb-sh-lg: 0 14px 34px rgba(11,42,91,.14); }
+  :root { --vb-sh: 0 2px 10px rgba(11,42,91,.07); --vb-sh-lg: 0 16px 38px rgba(11,42,91,.16); }
   html { scroll-behavior: smooth; }
   body { -webkit-font-smoothing: antialiased; }
+  html[data-theme="light"] body { background: #e9eff8; }
   ::-webkit-scrollbar { width: 10px; height: 10px; }
   ::-webkit-scrollbar-thumb { background: #b7c5da; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
   ::-webkit-scrollbar-track { background: transparent; }
-  #mainTopbar { box-shadow: 0 10px 30px rgba(11,42,91,.10); border-bottom: 1px solid var(--border); }
-  .topbar-title h1 { background: linear-gradient(90deg, var(--pro-navy), var(--blue)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-  #searchInput, .veh-wrap input, .ts-input-wrap input { border-radius: 14px; }
-  #searchInput:focus, .veh-wrap input:focus, .ts-input-wrap input:focus { box-shadow: 0 0 0 3px rgba(11,94,215,.18); border-color: var(--blue); outline: none; }
+  /* --- Dai tren: gradient navy, chu trang --- */
+  #mainTopbar { background: linear-gradient(120deg, #081c3a, #0b2a5b 55%, #0d4aa8); color: #eaf2ff; box-shadow: 0 12px 32px rgba(8,28,58,.35); border-bottom: none; }
+  #mainTopbar .topbar-title h1 { color: #fff; -webkit-text-fill-color: #fff; letter-spacing: -.2px; }
+  #mainTopbar .topbar-title .sub { color: #a9c3ee; }
+  #mainTopbar .btn-admin { background: rgba(255,255,255,.16); color: #fff; border: 1px solid rgba(255,255,255,.38); }
+  #mainTopbar .btn-admin:hover { background: rgba(255,255,255,.26); color: #fff; }
+  #mainTopbar .topbar-body { color: #cfe1ff; }
+  #mainTopbar .theme-btn { color: #ffe9a8; border-color: rgba(255,255,255,.4); }
+  #mainTopbar input[type="search"] { background: #fff; color: #14213d; border: none; border-radius: 14px; box-shadow: 0 3px 10px rgba(0,0,0,.18); }
+  #mainTopbar input[type="search"]:focus { box-shadow: 0 0 0 3px rgba(255,146,43,.55); outline: none; }
+  #tsOpenBtn { background: linear-gradient(135deg, #f76707, #e8590c); color: #fff; border: none; border-radius: 14px; font-weight: 700; box-shadow: 0 10px 24px rgba(232,89,12,.40); }
+  #tsOpenBtn:hover { filter: brightness(1.06); }
+  #mainTopbar .view-toggle { background: rgba(255,255,255,.14); border-radius: 12px; }
+  #mainTopbar .view-btn { color: #cfe1ff; border-radius: 9px; }
+  #mainTopbar .view-btn.active { background: #fff; color: #0b2a5b; box-shadow: 0 2px 8px rgba(0,0,0,.30); }
+  #mainTopbar .action-row .scope-btn { color: #cfe1ff; }
+  #mainTopbar .action-row .scope-btn.active { background: #fff; color: #0b2a5b; }
+  #mainTopbar .ctr-bar { color: #a9c3ee; }
+  /* --- Chip danh muc + nhan muc --- */
   .cat-chip, .filter-pill { border-radius: 999px; transition: transform .15s, box-shadow .15s; }
   .cat-chip:hover, .filter-pill:hover { transform: translateY(-1px); }
   .filter-pill.active { background: linear-gradient(135deg, var(--pro-navy), var(--blue)); color: #fff; border-color: transparent; box-shadow: 0 6px 16px rgba(11,94,215,.28); }
-  .product-card { border-radius: 16px; box-shadow: var(--vb-sh); transition: transform .16s ease, box-shadow .16s ease; }
+  .section-label { font-size: 13px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; border-left: 4px solid var(--pro-orange); padding-left: 9px; }
+  /* --- The san pham --- */
+  .product-card { border-radius: 18px; box-shadow: var(--vb-sh); transition: transform .16s ease, box-shadow .16s ease; }
   .product-card:hover { transform: translateY(-2px); box-shadow: var(--vb-sh-lg); }
-  .card-name { letter-spacing: -.2px; }
+  .card-name { font-size: 16px; font-weight: 800; color: var(--pro-navy); letter-spacing: -.2px; }
+  html[data-theme="dark"] .card-name { color: var(--text); }
+  .card-tags .tag { border-radius: 999px; font-weight: 600; }
+  /* --- Bang gia --- */
+  .vb-tbl-wrap { border-radius: 16px; box-shadow: var(--vb-sh); overflow: hidden; }
+  .vb-tbl-wrap table { border-collapse: separate; border-spacing: 0; }
+  .vb-tbl-wrap tbody tr { transition: background .12s; }
+  html[data-theme="light"] .vb-tbl-wrap tbody tr:hover { background: #eef4ff; }
+  /* --- Nut bam + cua so --- */
   .btn-primary { background: linear-gradient(135deg, var(--pro-navy), var(--blue)); border: none; border-radius: 12px; box-shadow: 0 8px 20px rgba(11,94,215,.25); color: #fff; }
   .btn-quote { background: linear-gradient(135deg, #f76707, var(--pro-orange)); border: none; border-radius: 12px; box-shadow: 0 8px 20px rgba(232,89,12,.28); color: #fff; }
   .btn-secondary { border-radius: 12px; }
-  .view-btn, .scope-btn { border-radius: 10px; transition: all .15s; }
-  .vb-tbl-wrap { border-radius: 14px; box-shadow: var(--vb-sh); }
-  .admin-panel { border-radius: 20px; box-shadow: 0 30px 80px rgba(11,42,91,.30); }
+  .admin-panel { border-radius: 22px; box-shadow: 0 30px 80px rgba(11,42,91,.32); }
   .ts-modal { border-radius: 18px; }
   button { transition: filter .15s, transform .1s; }
   button:active { transform: scale(.98); }
-  @media (max-width: 700px) { .product-card { border-radius: 14px; } }
+  @media (max-width: 700px) { .product-card { border-radius: 15px; } .card-name { font-size: 15px; } }
 }
 /* --- Nut + panel Bot gia --- */
 #vbBotBtn{position:fixed;right:18px;bottom:18px;z-index:99990;display:none;align-items:center;gap:8px;border:none;cursor:pointer;padding:13px 18px;border-radius:999px;background:linear-gradient(135deg,#0b2a5b,#0b5ed7);color:#fff;font:600 15px/1.1 system-ui,Arial,sans-serif;box-shadow:0 10px 26px rgba(11,42,91,.35)}
@@ -6139,10 +6164,9 @@ setTimeout(function(){ try{ tsLoad(false); }catch(e){} }, 4000); // tải sẵn 
 #vbBotPanel .hd button,#vbBotPanel .hd .tgl{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:9px;padding:6px 9px;cursor:pointer;font-size:12.5px;font-weight:600}
 #vbBotPanel .hd .tgl{display:flex;align-items:center;gap:5px}
 #vbMsgs{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:9px}
-.vb-m{max-width:92%;padding:10px 12px;border-radius:15px;font-size:14.5px;line-height:1.5;white-space:normal;word-break:break-word}
+.vb-m{max-width:92%;padding:10px 12px;border-radius:15px;font-size:14.5px;line-height:1.5;word-break:break-word}
 .vb-u{align-self:flex-end;background:#0b5ed7;color:#fff;border-bottom-right-radius:5px}
 .vb-b{align-self:flex-start;background:#182238;color:#e8eefb;border:1px solid #24314e;border-bottom-left-radius:5px;box-shadow:0 3px 10px rgba(0,0,0,.25)}
-.vb-li{padding-left:2px}
 .vb-rd{margin-top:7px;background:#0d1524;color:#8ec5ff;border:1px solid #2b3a55;border-radius:999px;padding:4px 11px;font-size:12px;cursor:pointer}
 .vb-dots i{display:inline-block;width:6px;height:6px;margin-right:3px;border-radius:50%;background:#8ec5ff;animation:vbp 1s infinite}
 .vb-dots i:nth-child(2){animation-delay:.15s}.vb-dots i:nth-child(3){animation-delay:.3s}
@@ -6162,7 +6186,6 @@ setTimeout(function(){ try{ tsLoad(false); }catch(e){} }, 4000); // tải sẵn 
     <div class="tt"><b>💰 Bot giá nội bộ</b><span>Hỏi giá lẻ / đại lý / thợ — đọc tiếng Việt</span></div>
     <label class="tgl"><input type="checkbox" id="vbRead" checked> Đọc</label>
     <button id="vbStop" type="button" title="Ngừng đọc">⏹</button>
-    <button id="vbBotNew" type="button" title="Mở bot ở tab mới">↗</button>
     <button id="vbBotClose" type="button" title="Đóng">✕</button>
   </div>
   <div id="vbMsgs"></div>
@@ -6192,7 +6215,7 @@ setTimeout(function(){ try{ tsLoad(false); }catch(e){} }, 4000); // tải sẵn 
   function fmt(t){
     return esc(t).replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>").split(String.fromCharCode(10)).map(function(l){
       l = l.trim(); if (!l) return "";
-      if (l.indexOf("- ") === 0) return "<div class=\"vb-li\">" + l.slice(2) + "</div>";
+      if (l.indexOf("- ") === 0) return "<div>" + l.slice(2) + "</div>";
       return "<div>" + l + "</div>";
     }).join("");
   }
@@ -6253,11 +6276,11 @@ setTimeout(function(){ try{ tsLoad(false); }catch(e){} }, 4000); // tải sẵn 
     var wait = addMsg("b", "", false);
     wait.querySelector("span").innerHTML = "<span class=\"vb-dots\"><i></i><i></i><i></i></span>";
     api({ q: text }, 120000).then(function(r){
-      var reply = (r && r.reply) ? String(r.reply) : "Bot chưa phản hồi — anh bấm ↗ ở góc panel để mở bot trực tiếp nhé.";
+      var reply = (r && r.reply) ? String(r.reply) : "Bot chưa phản hồi — anh thử lại sau ít phút nhé.";
       showReply(wait, reply);
     }).catch(function(){
       busy = false;
-      wait.querySelector("span").innerHTML = "⚠️ Không gọi được bot (mạng lỗi hoặc bot chưa cập nhật bản mới). Anh bấm ↗ ở góc panel để mở bot trực tiếp nhé.";
+      wait.querySelector("span").innerHTML = "⚠️ Chưa gọi được bot. Anh kiểm tra mạng rồi thử lại nhé.";
     });
   }
   function initChat(){
@@ -6280,7 +6303,6 @@ setTimeout(function(){ try{ tsLoad(false); }catch(e){} }, 4000); // tải sẵn 
     setTimeout(function(){ input.focus(); }, 300);
   });
   document.getElementById("vbBotClose").addEventListener("click", function(){ stopSpeak(); panel.classList.remove("open"); panel.setAttribute("aria-hidden","true"); });
-  document.getElementById("vbBotNew").addEventListener("click", function(){ window.open(BOT, "_blank"); });
   document.getElementById("vbStop").addEventListener("click", stopSpeak);
   document.getElementById("vbChips").addEventListener("click", function(e){
     if (e.target && e.target.tagName === "BUTTON") ask(e.target.textContent);
