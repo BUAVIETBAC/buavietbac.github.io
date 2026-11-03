@@ -2742,9 +2742,7 @@ const TABS = [
    Danh sách này sẽ được THAY THẾ bằng dữ liệu trực tiếp từ tab "PHÂN QUYỀN"
    ngay khi trang tải xong (xem syncAuthFromSheet). Đây chỉ là phương án dự
    phòng để không ai bị khóa ngoài nếu chưa đồng bộ được. */
-let AUTHORIZED = [
-  {email:'trunghieu.plk@gmail.com', password:'admin', name:'Hiếu', title:'admin', phone:'', active:true},
-];
+let AUTHORIZED = []; // Da xoa tai khoan du phong ghi san mat khau (bao mat) — tai khoan that tai tu tab PHAN QUYEN
 let authIsLive = false;
 
 let currentUser = null;
@@ -6096,6 +6094,40 @@ document.getElementById('tsInput').addEventListener('input', function(){ clearTi
 document.getElementById('tsInput').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ clearTimeout(_tsT); tsRender(); this.blur(); } });
 document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && document.getElementById('tsBg').classList.contains('open')) tsClose(); });
 setTimeout(function(){ try{ tsLoad(false); }catch(e){} }, 4000); // tải sẵn nền để mở lên là có ngay
+</script>
+
+<!-- ===== BOT GIA NOI BO (tich hop) — chi hien sau khi dang nhap trang bao gia ===== -->
+<style>
+#vbBotBtn{position:fixed;right:18px;bottom:18px;z-index:99990;display:none;align-items:center;gap:8px;border:none;cursor:pointer;padding:13px 18px;border-radius:999px;background:linear-gradient(135deg,#0b2a5b,#0b5ed7);color:#fff;font:600 15px/1.1 system-ui,Arial,sans-serif;box-shadow:0 10px 26px rgba(11,42,91,.35)}
+#vbBotBtn .dot{width:9px;height:9px;border-radius:50%;background:#ff922b;box-shadow:0 0 0 3px rgba(255,146,43,.25)}
+#vbBotPanel{position:fixed;top:0;right:0;height:100dvh;width:min(440px,100vw);z-index:99995;background:#0e1420;transform:translateX(105%);transition:transform .28s ease;display:flex;flex-direction:column;box-shadow:-18px 0 44px rgba(0,0,0,.35)}
+#vbBotPanel.open{transform:none}
+#vbBotPanel .hd{display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(135deg,#0b2a5b,#0b5ed7);color:#fff}
+#vbBotPanel .hd b{font:700 15px system-ui,Arial,sans-serif}
+#vbBotPanel .hd span{font:500 11px system-ui,Arial,sans-serif;opacity:.85}
+#vbBotPanel .hd button{margin-left:auto;background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:9px;padding:7px 10px;cursor:pointer;font:600 12.5px system-ui,Arial,sans-serif}
+#vbBotPanel .hd button.x{margin-left:0;padding:7px 11px}
+#vbBotFrame{flex:1;border:0;width:100%;background:#0e1420}
+#vbBotPanel .ft{padding:8px 14px;background:#0e1420;color:#9fb2cc;font:500 11.5px system-ui,Arial,sans-serif;border-top:1px solid #22314d}
+@media (max-width:640px){#vbBotBtn{right:12px;bottom:12px;padding:12px 15px;font-size:14px}}
+</style>
+<button id="vbBotBtn" type="button"><span class="dot"></span>💰 Bot giá nội bộ</button>
+<div id="vbBotPanel" aria-hidden="true">
+  <div class="hd"><div><b>💰 Bot giá nội bộ</b><br><span>Hỏi giá lẻ / đại lý / thợ — đọc tiếng Việt</span></div>
+  <button id="vbBotNew" type="button">↗ Tab mới</button><button class="x" id="vbBotClose" type="button">✕</button></div>
+  <iframe id="vbBotFrame" title="Bot giá nội bộ" allow="microphone"></iframe>
+  <div class="ft">🔓 Đã đăng nhập trang báo giá là dùng bot luôn. Nếu khung trắng, bấm “↗ Tab mới”.</div>
+</div>
+<script>
+(function(){
+  var URL_BOT = "https://script.google.com/macros/s/AKfycbxqzJ6f3Y0NIhxjByUUFA-yyflWjDfNN0D3mDKKyogOjubtbKWC_oKSIkBa0yS5xEk/exec";
+  var btn = document.getElementById("vbBotBtn"), panel = document.getElementById("vbBotPanel"), frame = document.getElementById("vbBotFrame"), loaded = false;
+  function sync(){ try { btn.style.display = localStorage.getItem("vb_session") ? "inline-flex" : "none"; } catch(e){} }
+  sync(); setInterval(sync, 1000);
+  btn.addEventListener("click", function(){ panel.classList.add("open"); panel.setAttribute("aria-hidden","false"); if(!loaded){ frame.src = URL_BOT; loaded = true; } });
+  document.getElementById("vbBotClose").addEventListener("click", function(){ panel.classList.remove("open"); panel.setAttribute("aria-hidden","true"); });
+  document.getElementById("vbBotNew").addEventListener("click", function(){ window.open(URL_BOT, "_blank"); });
+})();
 </script>
 </body>
 </html>
