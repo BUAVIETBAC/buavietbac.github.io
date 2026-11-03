@@ -6098,39 +6098,45 @@ setTimeout(function(){ try{ tsLoad(false); }catch(e){} }, 4000); // tải sẵn 
 
 
 
-<!-- ===== GIAO DIEN PRO V3 (SANG) + BOT GIA (lop phu, khong sua logic goc) ===== -->
+
+<!-- ===== GIAO DIEN PRO V4 (theo theme, gon, menu du) + BOT GIA ===== -->
 <style>
 @media screen {
   :root { --vb-sh: 0 2px 10px rgba(11,42,91,.07); --vb-sh-lg: 0 16px 38px rgba(11,42,91,.14); }
   html { scroll-behavior: smooth; }
   body { -webkit-font-smoothing: antialiased; }
-  html[data-theme="light"] body { background: #e8eef7; }
   ::-webkit-scrollbar { width: 10px; height: 10px; }
   ::-webkit-scrollbar-thumb { background: #b7c5da; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
   ::-webkit-scrollbar-track { background: transparent; }
-  /* --- Dai tren: nen trang sang, chu navy --- */
-  #mainTopbar { background: #ffffff; box-shadow: 0 8px 28px rgba(11,42,91,.10); border-bottom: 1px solid var(--border); }
-  #mainTopbar .topbar-title h1 { color: #0b2a5b; -webkit-text-fill-color: #0b2a5b; letter-spacing: -.2px; }
-  #mainTopbar .btn-admin { background: #eef3fb; color: #0b2a5b; border: 1px solid var(--border); }
-  #mainTopbar .btn-admin:hover { background: #e0eaf9; }
-  #mainTopbar input[type="search"] { background: #f2f6fc; border: 1.5px solid var(--border); border-radius: 14px; }
-  #mainTopbar input[type="search"]:focus { background: #fff; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(11,94,215,.16); outline: none; }
-  #tsOpenBtn { background: linear-gradient(135deg, #f76707, #e8590c); color: #fff; border: none; border-radius: 14px; font-weight: 700; box-shadow: 0 8px 20px rgba(232,89,12,.30); }
+  /* --- Dai tren: theo dung theme Sang/Toi, khong con nua sang nua toi --- */
+  #mainTopbar { background: var(--surface); color: var(--text); box-shadow: 0 8px 28px rgba(11,42,91,.10); border-bottom: 1px solid var(--border); padding-top: 10px; padding-bottom: 8px; }
+  #mainTopbar .topbar-title h1 { color: var(--text); font-size: 19px; letter-spacing: -.2px; }
+  #mainTopbar .topbar-title .logo { font-size: 20px; }
+  #mainTopbar .btn-admin { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+  #mainTopbar .btn-admin:hover { filter: brightness(1.05); }
+  #mainTopbar input[type="search"], #mainTopbar .veh-wrap input { background: var(--bg); color: var(--text); border: 1.5px solid var(--border); border-radius: 13px; padding-top: 9px; padding-bottom: 9px; font-size: 14px; }
+  #mainTopbar input[type="search"]:focus, #mainTopbar .veh-wrap input:focus { background: var(--surface); border-color: var(--blue); box-shadow: 0 0 0 3px rgba(11,94,215,.16); outline: none; }
+  #tsOpenBtn { background: linear-gradient(135deg, #f76707, #e8590c); color: #fff; border: none; border-radius: 13px; font-weight: 700; font-size: 14px; padding-top: 9px; padding-bottom: 9px; box-shadow: 0 8px 20px rgba(232,89,12,.28); }
   #tsOpenBtn:hover { filter: brightness(1.06); }
-  #mainTopbar .view-toggle { background: #eef3fb; border-radius: 12px; }
-  #mainTopbar .view-btn { color: var(--muted); border-radius: 9px; }
-  #mainTopbar .view-btn.active { background: #fff; color: #0b2a5b; box-shadow: 0 2px 8px rgba(11,42,91,.14); }
-  #mainTopbar .action-row .scope-btn { color: var(--muted); }
-  #mainTopbar .action-row .scope-btn.active { background: #fff; color: #0b2a5b; box-shadow: 0 2px 8px rgba(11,42,91,.14); }
-  /* --- Chip danh muc + nhan muc --- */
-  .cat-chip, .filter-pill { border-radius: 999px; transition: transform .15s, box-shadow .15s; }
+  /* --- Cum nut Tab nay / Tat ca / The / Bang: gon lai --- */
+  #mainTopbar .view-toggle { background: var(--bg); border-radius: 11px; padding: 3px; }
+  #mainTopbar .view-btn, #mainTopbar .scope-btn { padding: 6px 12px; font-size: 13.5px; border-radius: 9px; }
+  #mainTopbar .action-row { gap: 6px; }
+  .result-info { font-size: 13px; }
+  /* --- Menu tab + chip nhom: HIEN DU HET, xuong 2 dong, khong cuon ngang --- */
+  #tabScroll { flex-wrap: wrap !important; overflow: visible !important; gap: 6px; padding: 2px 2px 6px; }
+  #tabScroll .tab-btn { flex: 0 1 auto; padding: 6px 11px; font-size: 13px; white-space: nowrap; }
+  #tabScroll .vb-arr, .cat-nav .vb-arr { display: none !important; }
+  .cat-nav { flex-wrap: wrap !important; overflow: visible !important; gap: 6px; padding-bottom: 8px; }
+  .cat-chip, .filter-pill { border-radius: 999px; padding: 6px 11px; font-size: 13px; transition: transform .15s, box-shadow .15s; }
   .cat-chip:hover, .filter-pill:hover { transform: translateY(-1px); }
   .filter-pill.active { background: linear-gradient(135deg, var(--pro-navy), var(--blue)); color: #fff; border-color: transparent; box-shadow: 0 6px 16px rgba(11,94,215,.28); }
   .section-label { font-size: 13px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; border-left: 4px solid var(--pro-orange); padding-left: 9px; }
   /* --- The san pham --- */
-  .product-card { border-radius: 18px; box-shadow: var(--vb-sh); transition: transform .16s ease, box-shadow .16s ease; }
+  .product-card { border-radius: 18px; border: 1px solid var(--border); box-shadow: var(--vb-sh); transition: transform .16s ease, box-shadow .16s ease; }
   .product-card:hover { transform: translateY(-2px); box-shadow: var(--vb-sh-lg); }
-  .card-name { font-size: 16px; font-weight: 800; color: var(--pro-navy); letter-spacing: -.2px; }
+  .card-name { font-size: 16px; font-weight: 800; letter-spacing: -.2px; }
+  html[data-theme="light"] .card-name { color: var(--pro-navy); }
   html[data-theme="dark"] .card-name { color: var(--text); }
   .card-tags .tag { border-radius: 999px; font-weight: 600; }
   /* --- Bang gia --- */
@@ -6138,6 +6144,7 @@ setTimeout(function(){ try{ tsLoad(false); }catch(e){} }, 4000); // tải sẵn 
   .vb-tbl-wrap table { border-collapse: separate; border-spacing: 0; }
   .vb-tbl-wrap tbody tr { transition: background .12s; }
   html[data-theme="light"] .vb-tbl-wrap tbody tr:hover { background: #eef4ff; }
+  html[data-theme="dark"] .vb-tbl-wrap tbody tr:hover { background: rgba(255,255,255,.05); }
   /* --- Nut bam + cua so --- */
   .btn-primary { background: linear-gradient(135deg, var(--pro-navy), var(--blue)); border: none; border-radius: 12px; box-shadow: 0 8px 20px rgba(11,94,215,.25); color: #fff; }
   .btn-quote { background: linear-gradient(135deg, #f76707, var(--pro-orange)); border: none; border-radius: 12px; box-shadow: 0 8px 20px rgba(232,89,12,.28); color: #fff; }
@@ -6146,7 +6153,7 @@ setTimeout(function(){ try{ tsLoad(false); }catch(e){} }, 4000); // tải sẵn 
   .ts-modal { border-radius: 18px; }
   button { transition: filter .15s, transform .1s; }
   button:active { transform: scale(.98); }
-  @media (max-width: 700px) { .product-card { border-radius: 15px; } .card-name { font-size: 15px; } }
+  @media (max-width: 700px) { .product-card { border-radius: 15px; } .card-name { font-size: 15px; } #tabScroll .tab-btn { font-size: 12.5px; padding: 6px 9px; } }
 }
 /* --- Nut + panel Bot gia --- */
 #vbBotBtn{position:fixed;right:18px;bottom:18px;z-index:99990;display:none;align-items:center;gap:8px;border:none;cursor:pointer;padding:13px 18px;border-radius:999px;background:linear-gradient(135deg,#0b2a5b,#0b5ed7);color:#fff;font:600 15px/1.1 system-ui,Arial,sans-serif;box-shadow:0 10px 26px rgba(11,42,91,.35)}
